@@ -218,3 +218,54 @@ exports.getUsers = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Error retrieving users' });
   }
 };
+
+// 5. CREATE A NEW GUEST UNREGISTERED USER ON THE FLY
+exports.createGuestUser = async (req, res) => {
+  try {
+    const userCount = await User.countDocuments();
+    const guestNumber = userCount + 1;
+    const user = await User.create({
+      name: `Guest User ${guestNumber}`,
+      email: `guest_${Date.now()}_${guestNumber}@feedants.com`,
+      referralCode: `GUEST${guestNumber}_${Math.floor(100 + Math.random() * 900)}`
+    });
+
+    return res.status(201).json({ success: true, message: 'New user created', data: user });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to create guest user' });
+  }
+};
+
+// 6. RESET DEMO STATE (Instantly resets spots to 1/20 and Rohit Mehta to unregistered)
+exports.resetDemo = async (req, res) => {
+  const { id } = req.params;
+  try {
+    // 1. Find the primary seeded competition
+    const comp = await Competition.findById(id);
+    if (!comp) return res.status(404).json({ success: false, message: 'Competition not found' });
+
+    // 2. Find Ananya Sharma (User A)
+    const userA = await User.findOne({ email: 'ananya@example.com' });
+    
+    // 3. Remove all registrations for this competition EXCEPT User A
+    if (userA) {
+      await Registration.deleteMany({ competitionId: id, userId: { $ne: userA._id } });
+      // Reset User A's submission back to pending
+      await Registration.findOneAndUpdate(
+        { competitionId: id, userId: userA._id },
+        { 'submission.status': 'NOT_SUBMITTED', 'submission.mediaUrl': null }
+      );
+      // Reset booked spots to 1
+      comp.bookedSpots = 1;
+      await comp.save();
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Demo state reset successfully: 1/20 spots booked, User B unregistered'
+    });
+  } catch (error) {
+    console.error('Error resetting demo:', error);
+    return res.status(500).json({ success: false, message: 'Failed to reset demo state' });
+  }
+};

@@ -1,104 +1,113 @@
+// backend/scripts/seed.js
 require('dotenv').config();
 const mongoose = require('mongoose');
 const Competition = require('../models/Competition');
 const User = require('../models/User');
 const Registration = require('../models/Registration');
 
-const seedData = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log('Connected to DB for seeding...');
+async function seed() {
+  await mongoose.connect(process.env.MONGO_URI);
+  console.log('Connected to DB for seeding...');
 
-    // Clear existing collections
-    await Competition.deleteMany({});
-    await User.deleteMany({});
-    await Registration.deleteMany({});
+  await Registration.deleteMany({});
+  await Competition.deleteMany({});
+  await User.deleteMany({});
 
-    // Create Test Users
-    const userA = await User.create({
-      name: 'Ananya Sharma',
-      email: 'ananya@example.com',
-      avatarUrl: 'https://i.pravatar.cc/150?img=32',
-      referralCode: 'ANANYA99'
-    });
+  const userA = await User.create({
+    name: 'Ananya Sharma',
+    email: 'ananya@example.com',
+    referralCode: 'ANANYA10',
+    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150'
+  });
 
-    const userB = await User.create({
-      name: 'Rohan Mehta',
-      email: 'rohan@example.com',
-      avatarUrl: 'https://i.pravatar.cc/150?img=12',
-      referralCode: 'ROHAN100'
-    });
+  const userB = await User.create({
+    name: 'Rohit Mehta',
+    email: 'rohit@example.com',
+    referralCode: 'ROHIT10',
+    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'
+  });
 
-    // Date math relative to execution time
-    const now = new Date();
-    const registrationStart = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000); // 2 days ago
-    const registrationEnd = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);   // 5 days left
-    const submissionStart = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000);   // Starts tomorrow
-    const submissionEnd = new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000);  // 10 days left
-    const resultDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);     // 14 days left
-
-    // Create Seed Competition
-    const competition = await Competition.create({
-      title: 'Feedants Classical Dance',
-      category: 'Dance',
-      tags: ['Dance', 'Multi-Win', 'Winners get certificate'],
-      entryFee: 99,
-      prizePool: 1500,
-      totalCapacity: 20,
-      bookedSpots: 1, // 1 spot taken by default -> 19 spots remaining
-      judge: {
-        name: 'Manju Dubey',
-        title: 'Professional Kathak Dancer',
-        experience: '12+ Years of Experience',
-        avatarUrl: 'https://i.pravatar.cc/150?img=47',
-        mediaUrl: 'https://www.w3schools.com/html/mov_bbb.mp4'
+  const now = new Date();
+  const competition = await Competition.create({
+    title: 'Feedants Classical Dance',
+    category: 'Dance',
+    tags: ['Dance', 'Multi-Win', 'Winners get certificate'],
+    entryFee: 99,
+    prizePool: 1500,
+    totalCapacity: 20,
+    bookedSpots: 1, // Only 19 spots left
+    judge: {
+      name: 'Manju Dubey',
+      title: 'Professional Kathak Dancer',
+      experience: '12+ Years of Experience',
+      avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200',
+      mediaUrl: 'https://example.com/judge_intro.mp4'
+    },
+    registrationStartDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
+    registrationEndDate: new Date(now.getTime() + 1.25 * 24 * 60 * 60 * 1000), // ~1d 6h
+    submissionStartDate: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000),
+    submissionEndDate: new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000),
+    resultDate: new Date(now.getTime() + 22 * 24 * 60 * 60 * 1000),
+    description: 'This is an online classical dance competition open for all age groups. Participate from anywhere and showcase your talent. Express your passion through traditional dance.',
+    judgingParameters: [
+      { parameter: 'Rhythm & Timing (Taal)', weightage: 30 },
+      { parameter: 'Expressions & Abhinaya (Bhava)', weightage: 30 },
+      { parameter: 'Footwork & Grace (Angika)', weightage: 25 },
+      { parameter: 'Costume & Presentation', weightage: 15 }
+    ],
+    rulesAndEligibility: [
+      'Open to all age categories and experience levels.',
+      'Video submission must be between 2 to 5 minutes.',
+      'Only raw uncut performance videos will be accepted.',
+      'Video must clearly show full-body movements and expressions.'
+    ],
+    rewards: [
+      { rankTitle: '1st Winner', amount: 550 },
+      { rankTitle: '2nd Winner', amount: 300 },
+      { rankTitle: '3rd Winner', amount: 240 },
+      { rankTitle: '4th Winner', amount: 200 },
+      { rankTitle: '5th Winner', amount: 130 },
+      { rankTitle: '6th Winner', amount: 80 }
+    ],
+    previousWinners: [
+      {
+        name: 'Riya Shah',
+        rank: '1st Winner',
+        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200'
       },
-      registrationStartDate: registrationStart,
-      registrationEndDate: registrationEnd,
-      submissionStartDate: submissionStart,
-      submissionEndDate: submissionEnd,
-      resultDate: resultDate,
-      description: 'Showcase your Kathak, Bharatanatyam, or classical dance form performance to win exciting cash rewards and certificates.',
-      judgingParameters: [
-        { parameter: 'Technique & Rhythm (Taal)', weightage: 40 },
-        { parameter: 'Expressions (Abhinaya)', weightage: 30 },
-        { parameter: 'Costume & Presentation', weightage: 30 }
-      ],
-      rulesAndEligibility: [
-        'Video length must be between 60 to 180 seconds.',
-        'Solo performances only.',
-        'Unedited continuous shot video is required.'
-      ],
-      rewards: [
-        { rankTitle: '1st Winner', amount: 800 },
-        { rankTitle: '2nd Winner', amount: 400 },
-        { rankTitle: '3rd Winner', amount: 300 }
-      ],
-      isActive: true
-    });
+      {
+        name: 'Aarav Mehta',
+        rank: '1st Winner',
+        avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200'
+      },
+      {
+        name: 'Neha Verma',
+        rank: '2nd Winner',
+        avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200'
+      },
+      {
+        name: 'Ishita Chouhan',
+        rank: '3rd Winner',
+        avatarUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200'
+      }
+    ]
+  });
 
-    // Seed 1 existing registration for User A
-    await Registration.create({
-      competitionId: competition._id,
-      userId: userA._id,
-      status: 'CONFIRMED',
-      paymentStatus: 'COMPLETED'
-    });
+  // User A already registered
+  await Registration.create({
+    competitionId: competition._id,
+    userId: userA._id,
+    paymentStatus: 'COMPLETED',
+    status: 'CONFIRMED'
+  });
 
-    console.log(`
-=== SEED COMPLETE ===
-Competition ID: ${competition._id}
-User A (Registered): ${userA._id}
-User B (Unregistered): ${userB._id}
-Remaining Spots: ${competition.totalCapacity - competition.bookedSpots}
-=====================
-    `);
+  console.log('\n=== RE-SEEDED WITH 6 REWARDS & PREVIOUS WINNERS ===');
+  console.log(`Competition ID: ${competition._id}`);
+  console.log(`User A (Registered): ${userA._id}`);
+  console.log(`User B (Unregistered): ${userB._id}`);
+  console.log('==================================================\n');
 
-    process.exit(0);
-  } catch (error) {
-    console.error('Seeding Error:', error);
-    process.exit(1);
-  }
-};
+  process.exit(0);
+}
 
-seedData();
+seed();
