@@ -1,18 +1,18 @@
-// mobile-app/App.js
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  SafeAreaView, 
-  ScrollView, 
-  RefreshControl, 
-  StyleSheet, 
-  ActivityIndicator, 
-  View, 
-  Text, 
+import {
+  SafeAreaView,
+  ScrollView,
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
   Alert,
-  StatusBar 
+  RefreshControl,
+  TouchableOpacity,
+  StatusBar
 } from 'react-native';
-import apiClient from './src/config/api';
 
+// Components
 import Header from './src/components/Header';
 import PricingCard from './src/components/PricingCard';
 import JudgeCard from './src/components/JudgeCard';
@@ -25,60 +25,55 @@ import TrustAndReferral from './src/components/TrustAndReferral';
 import BottomActionBar from './src/components/BottomActionBar';
 import BottomNavBar from './src/components/BottomNavBar';
 
+const API_BASE_URL = 'http://10.78.55.113:5000/api/v1/competitions';
+
 export default function App() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [competition, setCompetition] = useState(null);
-  const [competitionId, setCompetitionId] = useState(null);
   const [language, setLanguage] = useState('ENG');
   const [users, setUsers] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [activeNavTab, setActiveNavTab] = useState('Competitions');
 
-  // 1. Initial Load: Fetch Users & Initial Competition
-  const initialize = async () => {
+  // 1. Fetch Users
+  const fetchUsers = async () => {
     try {
-      const usersRes = await apiClient.get('/users');
-      if (usersRes.data?.success && usersRes.data.data.length > 0) {
-        setUsers(usersRes.data.data);
-        setCurrentUser(usersRes.data.data[0]); // default to User A
+      const res = await fetch(`${API_BASE_URL}/users`);
+      const data = await res.json();
+      if (data?.success && data.data.length > 0) {
+        setUsers(data.data);
+        if (!currentUser) {
+          setCurrentUser(data.data[0]);
+        }
       }
     } catch (e) {
       console.warn('Could not load users list:', e.message);
     }
   };
 
-  // 2. Fetch Competition Details
+  // 2. Dynamically fetch primary competition
   const fetchCompetition = useCallback(async (activeUserId) => {
     try {
       const headers = activeUserId ? { 'x-user-id': activeUserId } : {};
-      // Fetch latest competition if ID not yet known
-      const url = competitionId ? `/${competitionId}` : '/users';
-      
-      let compId = competitionId;
-      if (!compId) {
-        // Find seed competition ID from your database
-        const checkRes = await apiClient.get('/users');
-        // Fallback default ID if needed
-        compId = '6ab264c3dfe2d14ecdda0b1b';
-        setCompetitionId(compId);
-      }
-
-      const res = await apiClient.get(`/${compId}`, { headers });
-      if (res.data?.success) {
-        setCompetition(res.data.data);
+      const res = await fetch(`${API_BASE_URL}/primary`, { headers });
+      const data = await res.json();
+      if (data?.success) {
+        setCompetition(data.data);
       }
     } catch (error) {
       console.error('Fetch error:', error);
+      Alert.alert('Connection Error', 'Could not load competition. Ensure backend is running.');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [competitionId]);
+  }, []);
 
   useEffect(() => {
-    initialize();
+    fetchUsers();
+    fetchCompetition();
   }, []);
 
   useEffect(() => {
@@ -89,77 +84,183 @@ export default function App() {
 
   const onRefresh = () => {
     setRefreshing(true);
+    fetchUsers();
     fetchCompetition(currentUser?._id);
   };
 
-  // Handle Creating a New Unregistered Guest User
+  // Handle Creating a New Guest User
   const handleAddNewUser = async () => {
     try {
-      const res = await apiClient.post('/users/new');
-      if (res.data?.success) {
-        const newUser = res.data.data;
+      const res = await fetch(`${API_BASE_URL}/users/new`, { method: 'POST' });
+      const data = await res.json();
+      if (data?.success) {
+        const newUser = data.data;
         setUsers(prev => [...prev, newUser]);
         setCurrentUser(newUser);
-        Alert.alert('New User Created', `Switched to ${newUser.name} (Unregistered). You can now test registration!`);
+        Alert.alert('New User Created', `Switched to ${newUser.name} (Unregistered). Ready to test registration!`);
       }
     } catch (e) {
       Alert.alert('Error', 'Failed to create new guest user.');
     }
   };
 
-  // Handle Resetting Demo State
+  // Handle Instant Demo Reset
   const handleResetDemo = async () => {
-    if (!competitionId) return;
+    if (!competition?._id) return;
     try {
-      const res = await apiClient.post(`/${competitionId}/reset-demo`);
-      Alert.alert('Demo Reset', res.data.message || 'Reset complete');
-      // Set to User B (Rohit Mehta) to test registration
-      const rohit = users.find(u => u.name.includes('Rohit'));
-      if (rohit) setCurrentUser(rohit);
-      fetchCompetition(rohit?._id);
+      const res = await fetch(`${API_BASE_URL}/${competition._id}/reset-demo`, { method: 'POST' });
+      const data = await res.json();
+      Alert.alert('Demo State Reset', data.message || 'Reset complete');
+      await fetchUsers();
+
+      const resUsers = await fetch(`${API_BASE_URL}/users`);
+      const dataUsers = await resUsers.json();
+      if (dataUsers?.success) {
+        const rohit = dataUsers.data.find(u => u.name.includes('Rohit'));
+        if (rohit) setCurrentUser(rohit);
+        fetchCompetition(rohit?._id);
+      }
     } catch (e) {
       Alert.alert('Error', 'Failed to reset demo state.');
     }
   };
 
-  // Handle Bottom CTA Action (Register / Submit)
+  // Handle CTA Action
   const handleAction = async () => {
     const action = competition?.actionState?.action;
-    if (!currentUser) return;
+    const compId = competition?._id;
+
+    if (!currentUser || !compId) return;
 
     if (action === 'REGISTER') {
       setActionLoading(true);
       try {
-        const res = await apiClient.post(
-          `/${competitionId}/register`,
-          {},
-          { headers: { 'x-user-id': currentUser._id } }
-        );
-        Alert.alert('Success 🎉', res.data.message || 'Registered successfully!');
+        const res = await fetch(`${API_BASE_URL}/${compId}/register`, {
+          method: 'POST',
+          headers: { 'x-user-id': currentUser._id, 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        Alert.alert('Success 🎉', data.message || 'Registered successfully!');
         fetchCompetition(currentUser._id);
       } catch (err) {
-        Alert.alert('Notice', err.response?.data?.message || 'Registration failed');
+        Alert.alert('Notice', 'Registration failed');
       } finally {
         setActionLoading(false);
       }
     } else if (action === 'SUBMIT') {
       setActionLoading(true);
       try {
-        const res = await apiClient.post(
-          `/${competitionId}/submit`,
-          { mediaUrl: 'https://feedants.com/uploads/classical_dance_entry.mp4' },
-          { headers: { 'x-user-id': currentUser._id } }
-        );
+        await fetch(`${API_BASE_URL}/${compId}/submit`, {
+          method: 'POST',
+          headers: { 'x-user-id': currentUser._id, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mediaUrl: 'https://feedants.com/uploads/classical_dance_submission.mp4' })
+        });
         Alert.alert('Submitted 🚀', 'Submission uploaded successfully!');
         fetchCompetition(currentUser._id);
       } catch (err) {
-        Alert.alert('Error', err.response?.data?.message || 'Submission failed');
+        Alert.alert('Error', 'Submission failed');
       } finally {
         setActionLoading(false);
       }
     } else if (action === 'VIEW_SUBMISSION') {
       Alert.alert('Submission Details', 'Your video has been recorded and is in queue for judging.');
     }
+  };
+
+  const renderTabContent = () => {
+    if (activeNavTab !== 'Competitions') {
+      return (
+        <View style={styles.placeholderContainer}>
+          <Text style={styles.feedantsBrand}>FEEDANTS</Text>
+          <Text style={styles.placeholderTitle}>{activeNavTab} Feed</Text>
+          <Text style={styles.placeholderSub}>
+            Welcome to Feedants! Explore creative talents and events.
+          </Text>
+          <TouchableOpacity 
+            style={styles.returnBtn} 
+            onPress={() => setActiveNavTab('Competitions')}
+          >
+            <Text style={styles.returnBtnText}>← Back to Classical Dance Competition</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return (
+      <>
+        <ScrollView 
+          contentContainerStyle={styles.scroll}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        >
+          <Header 
+            title={competition?.title}
+            isRegistered={competition?.userState?.isRegistered}
+            language={language}
+            onToggleLanguage={setLanguage}
+            currentUser={currentUser}
+            users={users}
+            onSelectUser={setCurrentUser}
+            onAddNewUser={handleAddNewUser}
+            onResetDemo={handleResetDemo}
+            onGoBack={() => setActiveNavTab('Home')}
+          />
+
+          <PricingCard 
+            prizePool={competition?.prizePool}
+            entryFee={competition?.entryFee}
+            totalCapacity={competition?.totalCapacity}
+            bookedSpots={competition?.bookedSpots}
+            remainingSpots={competition?.remainingSpots}
+            language={language}
+          />
+
+          <JudgeCard judge={competition?.judge} />
+
+          <CountdownTimer 
+            targetDate={competition?.registrationEndDate} 
+            language={language}
+          />
+
+          <ImportantDates 
+            registrationEnd={competition?.registrationEndDate}
+            submissionStart={competition?.submissionStartDate}
+            submissionEnd={competition?.submissionEndDate}
+            resultDate={competition?.resultDate}
+            language={language}
+          />
+
+          <PreviousWinners 
+            winners={competition?.previousWinners} 
+            language={language}
+          />
+
+          <TabbedDetails 
+            description={competition?.description}
+            parameters={competition?.judgingParameters}
+            rules={competition?.rulesAndEligibility}
+            language={language}
+          />
+
+          <RewardsBreakdown 
+            rewards={competition?.rewards} 
+            language={language}
+          />
+
+          <TrustAndReferral 
+            referralCode={currentUser?.referralCode} 
+            language={language}
+          />
+        </ScrollView>
+
+        <BottomActionBar 
+          actionState={competition?.actionState}
+          userState={competition?.userState}
+          onAction={handleAction}
+          loading={actionLoading}
+          language={language}
+        />
+      </>
+    );
   };
 
   if (loading && !refreshing) {
@@ -174,79 +275,9 @@ export default function App() {
   return (
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <ScrollView 
-        contentContainerStyle={styles.scroll}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      >
-        <Header 
-          title={competition?.title}
-          isRegistered={competition?.userState?.isRegistered}
-          language={language}
-          onToggleLanguage={setLanguage}
-          currentUser={currentUser}
-          users={users}
-          onSelectUser={setCurrentUser}
-          onAddNewUser={handleAddNewUser}
-          onResetDemo={handleResetDemo}
-        />
 
-        <PricingCard 
-          prizePool={competition?.prizePool}
-          entryFee={competition?.entryFee}
-          totalCapacity={competition?.totalCapacity}
-          bookedSpots={competition?.bookedSpots}
-          remainingSpots={competition?.remainingSpots}
-          language={language}
-        />
+      {renderTabContent()}
 
-        <JudgeCard judge={competition?.judge} />
-
-        <CountdownTimer 
-          targetDate={competition?.registrationEndDate} 
-          language={language}
-        />
-
-        <ImportantDates 
-          registrationEnd={competition?.registrationEndDate}
-          submissionStart={competition?.submissionStartDate}
-          submissionEnd={competition?.submissionEndDate}
-          resultDate={competition?.resultDate}
-          language={language}
-        />
-
-        <PreviousWinners 
-          winners={competition?.previousWinners} 
-          language={language}
-        />
-
-        <TabbedDetails 
-          description={competition?.description}
-          parameters={competition?.judgingParameters}
-          rules={competition?.rulesAndEligibility}
-          language={language}
-        />
-
-        <RewardsBreakdown 
-          rewards={competition?.rewards} 
-          language={language}
-        />
-
-        <TrustAndReferral 
-          referralCode={currentUser?.referralCode} 
-          language={language}
-        />
-      </ScrollView>
-
-      {/* Floating Sticky CTA */}
-      <BottomActionBar 
-        actionState={competition?.actionState}
-        userState={competition?.userState}
-        onAction={handleAction}
-        loading={actionLoading}
-        language={language}
-      />
-
-      {/* Bottom App Navigation Bar */}
       <BottomNavBar 
         activeTab={activeNavTab}
         onSelectTab={setActiveNavTab}
@@ -256,8 +287,61 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FFFFFF' },
-  scroll: { paddingBottom: 16 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' },
-  loadingText: { marginTop: 10, color: '#64748B', fontSize: 13, fontWeight: '500' }
+  safe: {
+    flex: 1,
+    backgroundColor: '#FFFFFF'
+  },
+  scroll: {
+    paddingBottom: 20
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF'
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#64748B',
+    fontWeight: '600'
+  },
+  placeholderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    backgroundColor: '#F8FAFC'
+  },
+  feedantsBrand: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#0D9488',
+    letterSpacing: 2,
+    marginBottom: 8
+  },
+  placeholderTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 8
+  },
+  placeholderSub: {
+    fontSize: 14,
+    color: '#64748B',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20
+  },
+  returnBtn: {
+    backgroundColor: '#0D9488',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10
+  },
+  returnBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 14
+  }
 });

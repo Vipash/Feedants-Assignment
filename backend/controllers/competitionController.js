@@ -219,20 +219,24 @@ exports.getUsers = async (req, res) => {
   }
 };
 
-// 5. CREATE A NEW GUEST UNREGISTERED USER ON THE FLY
+const MOCK_NAMES = [
+  'Kabir Joshi', 'Priya Patel', 'Siddharth Rao', 'Tanvi Deshmukh',
+  'Aditya Verma', 'Meera Iyer', 'Arjun Kapoor', 'Sanya Malhotra'
+];
+
 exports.createGuestUser = async (req, res) => {
   try {
     const userCount = await User.countDocuments();
-    const guestNumber = userCount + 1;
+    const randomName = MOCK_NAMES[(userCount - 2) % MOCK_NAMES.length] || `Participant ${userCount + 1}`;
+    
     const user = await User.create({
-      name: `Guest User ${guestNumber}`,
-      email: `guest_${Date.now()}_${guestNumber}@feedants.com`,
-      referralCode: `GUEST${guestNumber}_${Math.floor(100 + Math.random() * 900)}`
+      name: randomName,
+      email: `${randomName.toLowerCase().replace(/\s+/g, '.')}_${Date.now()}@feedants.com`,
+      referralCode: `${randomName.slice(0, 4).toUpperCase()}${Math.floor(100 + Math.random() * 900)}`
     });
-
-    return res.status(201).json({ success: true, message: 'New user created', data: user });
+    return res.status(201).json({ success: true, message: 'New participant created', data: user });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to create guest user' });
+    return res.status(500).json({ success: false, message: 'Failed to create user' });
   }
 };
 
@@ -240,32 +244,59 @@ exports.createGuestUser = async (req, res) => {
 exports.resetDemo = async (req, res) => {
   const { id } = req.params;
   try {
-    // 1. Find the primary seeded competition
+    // Find the target competition
     const comp = await Competition.findById(id);
-    if (!comp) return res.status(404).json({ success: false, message: 'Competition not found' });
+    if (!comp) {
+      return res.status(404).json({ success: false, message: 'Competition not found' });
+    }
 
-    // 2. Find Ananya Sharma (User A)
+    // Find seeded primary users
     const userA = await User.findOne({ email: 'ananya@example.com' });
-    
-    // 3. Remove all registrations for this competition EXCEPT User A
-    if (userA) {
+    const userB = await User.findOne({ email: 'rohit@example.com' });
+
+    if (userA && userB) {
+      // 1. Delete all guest users except Ananya and Rohit
+      await User.deleteMany({ _id: { $nin: [userA._id, userB._id] } });
+
+      // 2. Delete all registrations except User A
       await Registration.deleteMany({ competitionId: id, userId: { $ne: userA._id } });
-      // Reset User A's submission back to pending
+
+      // 3. Reset User A's submission back to pending
       await Registration.findOneAndUpdate(
         { competitionId: id, userId: userA._id },
         { 'submission.status': 'NOT_SUBMITTED', 'submission.mediaUrl': null }
       );
-      // Reset booked spots to 1
+
+      // 4. Reset spots
       comp.bookedSpots = 1;
       await comp.save();
     }
 
     return res.status(200).json({
       success: true,
-      message: 'Demo state reset successfully: 1/20 spots booked, User B unregistered'
+      message: 'Demo state reset successfully',
+      data: comp
     });
   } catch (error) {
-    console.error('Error resetting demo:', error);
-    return res.status(500).json({ success: false, message: 'Failed to reset demo state' });
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to reset demo state',
+      error: error.message
+    });
+  }
+};
+
+exports.getPrimaryCompetition = async (req, res) => {
+  try {
+    // Finds the latest active competition
+    const comp = await Competition.findOne({ isActive: true }).sort({ createdAt: -1 });
+    if (!comp) {
+      return res.status(404).json({ success: false, message: 'No competition found. Please run seed.' });
+    }
+    // Forward directly to getCompetitionDetails with the dynamic ID
+    req.params.id = comp._id.toString();
+    return exports.getCompetitionDetails(req, res);
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Server error retrieving primary competition' });
   }
 };

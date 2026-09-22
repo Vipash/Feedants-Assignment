@@ -21,16 +21,21 @@ export default function Header({
   users = [],
   onSelectUser,
   onAddNewUser,
-  onResetDemo
+  onResetDemo,
+  onGoBack
 }) {
   const [modalVisible, setModalVisible] = useState(false);
   const t = translations[language] || translations.ENG;
 
   return (
     <View style={styles.container}>
-      {/* Top navigation row: Go back | User Switcher Chip | Language Toggle */}
+      {/* Top navigation row: Go back (Left) | User Switcher + Language Toggle (Right) */}
       <View style={styles.topRow}>
-        <TouchableOpacity style={styles.backBtn} activeOpacity={0.7}>
+        <TouchableOpacity 
+          style={styles.backBtn} 
+          activeOpacity={0.7}
+          onPress={onGoBack}
+        >
           <ArrowLeft size={20} color="#111827" />
           <Text style={styles.backText}>{t.goBack}</Text>
         </TouchableOpacity>
@@ -163,13 +168,16 @@ const styles = StyleSheet.create({
   },
   topRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center'
+    justifyContent: 'space-between', // Pushes left button to left, right controls to right
+    alignItems: 'center',
+    width: '100%'
   },
   backBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6
+    gap: 6,
+    marginRight: 12, // Prevents collision with user chip on small viewports
+    flexShrink: 1
   },
   backText: {
     fontSize: 15,
@@ -179,7 +187,8 @@ const styles = StyleSheet.create({
   rightHeaderActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8
+    gap: 8,
+    flexShrink: 0
   },
   userChip: {
     flexDirection: 'row',
@@ -221,7 +230,7 @@ const styles = StyleSheet.create({
   },
   titleRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justify: 'space-between',
     alignItems: 'center',
     marginTop: 14
   },
@@ -286,7 +295,7 @@ const styles = StyleSheet.create({
   },
   modalHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justify: 'space-between',
     alignItems: 'center'
   },
   modalTitle: {
