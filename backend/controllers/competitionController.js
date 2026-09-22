@@ -1,70 +1,220 @@
-const registerForCompetition = async (req, res) => {
-  const { competitionId } = req.params;
-  const userId = req.headers['x-user-id']; // Or req.user.id
+// backend/controllers/competitionController.js
+const Competition = require('../models/Competition');
+const Registration = require('../models/Registration');
+const User = require('../models/User');
 
-  if (!userId) {
-    return res.status(401).json({ success: false, message: 'User ID is required' });
-  }
-
-  // 1. Check if user is already registered (fast-fail)
-  const existingRegistration = await Registration.findOne({ competitionId, userId });
-  if (existingRegistration) {
-    return res.status(409).json({ success: false, message: 'You are already registered for this competition' });
-  }
-
+// Helper to compute lifecycle state
+const computeLifecycleStatus = (competition) => {
   const now = new Date();
+  if (now < competition.registrationStartDate) return 'UPCOMING';
+  if (now <= competition.registrationEndDate) return 'REGISTRATION_OPEN';
+  if (now <= competition.submissionEndDate) return 'SUBMISSION_OPEN';
+  if (now <= competition.resultDate) return 'EVALUATION';
+  return 'COMPLETED';
+};
 
-  // 2. ATOMIC STEP: Increment bookedSpots ONLY IF under totalCapacity and within registration dates
-  const updatedCompetition = await Competition.findOneAndUpdate(
-    {
-      _id: competitionId,
-      isActive: true,
-      registrationStartDate: { $lte: now },
-      registrationEndDate: { $gte: now },
-      $expr: { $lt: ['$bookedSpots', '$totalCapacity'] } // Guarantees capacity safety
-    },
-    {
-      $inc: { bookedSpots: 1 }
-    },
-    {
-      new: true
-    }
-  );
-
-  if (!updatedCompetition) {
-    // Check reason for failure to provide accurate response code
-    const comp = await Competition.findById(competitionId);
-    if (!comp) return res.status(404).json({ success: false, message: 'Competition not found' });
-    if (now > comp.registrationEndDate) {
-      return res.status(400).json({ success: false, message: 'Registration window has closed' });
-    }
-    return res.status(409).json({ success: false, message: 'Competition is fully booked' });
-  }
-
-  // 3. Create registration record
+// 1. GET Competition Details with dynamic user state
+exports.getCompetitionDetails = async (req, res) => {
   try {
-    const registration = await Registration.create({
-      competitionId,
-      userId,
-      paymentStatus: 'COMPLETED',
-      status: 'CONFIRMED'
-    });
+    const { id } = req.params;
+    const userId = req.headers['x-user-id'];
 
-    return res.status(201).json({
+    const competition = await Competition.findById(id).lean();
+    if (!competition) {
+      return res.status(404).json({ success: false, message: 'Competition not found' });
+    }
+
+    const lifecycleStatus = computeLifecycleStatus(competition);
+    const remainingSpots = Math.max(0, competition.totalCapacity - competition.bookedSpots);
+
+    // Resolve user-specific participation state if userId provided
+    let userState = {
+      isRegistered: false,
+      hasSubmitted: false,
+      registrationId: null,
+      submission: null,
+      status: 'UNREGISTERED'
+    };
+
+    if (userId) {
+      const registration = await Registration.findOne({
+        competitionId: id,
+        userId: userId
+      }).lean();
+
+      if (registration) {
+        const hasSubmitted = registration.submission?.status === 'SUBMITTED';
+        userState = {
+          isRegistered: true,
+          hasSubmitted,
+          registrationId: registration._id,
+          submission: registration.submission || null,
+          status: hasSubmitted ? 'SUBMITTED' : 'REGISTERED'
+        };
+      }
+    }
+
+    // Dynamic CTA (Call-to-Action) resolution for the frontend action bar
+    let actionState = {
+      label: 'Register Now',
+      action: 'REGISTER',
+      enabled: true
+    };
+
+    if (userState.isRegistered) {
+      if (lifecycleStatus === 'REGISTRATION_OPEN' || lifecycleStatus === 'SUBMISSION_OPEN') {
+        if (userState.hasSubmitted) {
+          actionState = { label: 'Submission Uploaded', action: 'VIEW_SUBMISSION', enabled: true };
+        } else {
+          actionState = { label: 'Upload Submission', action: 'SUBMIT', enabled: true };
+        }
+      } else if (lifecycleStatus === 'EVALUATION') {
+        actionState = { label: 'Under Evaluation', action: 'NONE', enabled: false };
+      } else if (lifecycleStatus === 'COMPLETED') {
+        actionState = { label: 'View Results', action: 'VIEW_RESULTS', enabled: true };
+      }
+    } else {
+      if (remainingSpots <= 0) {
+        actionState = { label: 'Competition Full', action: 'NONE', enabled: false };
+      } else if (lifecycleStatus !== 'REGISTRATION_OPEN') {
+        actionState = { label: 'Registration Closed', action: 'NONE', enabled: false };
+      }
+    }
+
+    return res.status(200).json({
       success: true,
-      message: 'Registered successfully',
       data: {
-        registration,
-        remainingSpots: updatedCompetition.totalCapacity - updatedCompetition.bookedSpots
+        ...competition,
+        remainingSpots,
+        lifecycleStatus,
+        userState,
+        actionState,
+        serverTime: new Date()
       }
     });
   } catch (error) {
-    // If registration creation fails (e.g., unique index violation), rollback the spot decrement
-    await Competition.findByIdAndUpdate(competitionId, { $inc: { bookedSpots: -1 } });
-    
-    if (error.code === 11000) {
-      return res.status(409).json({ success: false, message: 'Registration already exists' });
+    console.error('Error in getCompetitionDetails:', error);
+    return res.status(500).json({ success: false, message: 'Server error fetching competition' });
+  }
+};
+
+// 2. ATOMIC REGISTRATION (High concurrency safe)
+exports.registerForCompetition = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.headers['x-user-id'];
+
+  if (!userId) {
+    return res.status(401).json({ success: false, message: 'x-user-id header is required' });
+  }
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
-    return res.status(500).json({ success: false, message: 'Registration processing failed' });
+
+    // Fast-fail check for existing registration
+    const existing = await Registration.findOne({ competitionId: id, userId });
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'User is already registered for this competition' });
+    }
+
+    const now = new Date();
+
+    // ATOMIC LOCK & INCREMENT
+    // Prevents race condition: Only increments if bookedSpots < totalCapacity
+    const competition = await Competition.findOneAndUpdate(
+      {
+        _id: id,
+        isActive: true,
+        registrationStartDate: { $lte: now },
+        registrationEndDate: { $gte: now },
+        $expr: { $lt: ['$bookedSpots', '$totalCapacity'] }
+      },
+      { $inc: { bookedSpots: 1 } },
+      { new: true }
+    );
+
+    if (!competition) {
+      const checkComp = await Competition.findById(id);
+      if (!checkComp) return res.status(404).json({ success: false, message: 'Competition not found' });
+      if (now > checkComp.registrationEndDate) {
+        return res.status(400).json({ success: false, message: 'Registration has closed' });
+      }
+      return res.status(409).json({ success: false, message: 'Competition is fully booked' });
+    }
+
+    // Create Registration Record
+    try {
+      const registration = await Registration.create({
+        competitionId: id,
+        userId,
+        status: 'CONFIRMED',
+        paymentStatus: 'COMPLETED'
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: 'Successfully registered!',
+        data: {
+          registration,
+          remainingSpots: competition.totalCapacity - competition.bookedSpots,
+          bookedSpots: competition.bookedSpots
+        }
+      });
+    } catch (err) {
+      // Rollback the increment if registration insertion failed (e.g., unique key collision)
+      await Competition.findByIdAndUpdate(id, { $inc: { bookedSpots: -1 } });
+      if (err.code === 11000) {
+        return res.status(409).json({ success: false, message: 'User is already registered' });
+      }
+      throw err;
+    }
+  } catch (error) {
+    console.error('Error in registerForCompetition:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+// 3. SUBMISSION HANDLING
+exports.submitEntry = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.headers['x-user-id'];
+  const { mediaUrl } = req.body;
+
+  if (!userId) return res.status(401).json({ success: false, message: 'User ID required' });
+  if (!mediaUrl) return res.status(400).json({ success: false, message: 'Media URL is required' });
+
+  try {
+    const registration = await Registration.findOne({ competitionId: id, userId });
+    if (!registration) {
+      return res.status(403).json({ success: false, message: 'You must register before submitting' });
+    }
+
+    registration.submission = {
+      mediaUrl,
+      submittedAt: new Date(),
+      status: 'SUBMITTED'
+    };
+    await registration.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Submission uploaded successfully',
+      data: registration
+    });
+  } catch (error) {
+    console.error('Error in submitEntry:', error);
+    return res.status(500).json({ success: false, message: 'Error submitting entry' });
+  }
+};
+
+// 4. USERS LIST (Convenience endpoint for UI User-Switcher)
+exports.getUsers = async (req, res) => {
+  try {
+    const users = await User.find().select('name email referralCode avatarUrl');
+    return res.status(200).json({ success: true, data: users });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Error retrieving users' });
   }
 };
