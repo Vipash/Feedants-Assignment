@@ -1,4 +1,7 @@
-// backend/scripts/test-concurrency.js
+if (!globalThis.crypto) {
+  globalThis.crypto = require('crypto').webcrypto;
+}
+
 require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('../models/User');
