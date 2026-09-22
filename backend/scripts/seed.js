@@ -1,4 +1,7 @@
-// backend/scripts/seed.js
+if (!globalThis.crypto) {
+  globalThis.crypto = require('crypto').webcrypto;
+}
+
 require('dotenv').config();
 const mongoose = require('mongoose');
 const Competition = require('../models/Competition');
