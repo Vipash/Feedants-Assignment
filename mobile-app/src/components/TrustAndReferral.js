@@ -1,80 +1,197 @@
 // mobile-app/src/components/TrustAndReferral.js
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { ShieldCheck, Share2, MessageSquare, ChevronRight, HelpCircle } from 'lucide-react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, TextInput } from 'react-native';
+import { 
+  Play, 
+  ShieldCheck, 
+  Megaphone, 
+  MessageSquare, 
+  ChevronRight 
+} from 'lucide-react-native';
+import { translations } from '../utils/translations';
 
-export default function TrustAndReferral({ referralCode }) {
-  const referralLink = `https://feedants.com/c/${referralCode || 'classicd21'}`;
+export default function TrustAndReferral({ referralCode, language = 'ENG' }) {
+  const t = translations[language] || translations.ENG;
+  const referralLink = `https://feedants.com/r/${referralCode || 'referral123'}`;
 
   return (
     <View style={styles.container}>
-      {/* FAQ & Trust banner */}
-      <TouchableOpacity 
-        style={styles.trustRow}
-        onPress={() => Alert.alert('Prize Distribution FAQ', 'Prize money is directly transferred to your bank/UPI within 24h of result announcement.')}
-      >
-        <View style={styles.left}>
-          <HelpCircle size={16} color="#0D9488" />
-          <Text style={styles.trustText}>How will you receive prize money?</Text>
-        </View>
-        <ChevronRight size={16} color="#94A3B8" />
-      </TouchableOpacity>
+      {/* 1. Side-by-Side Trust Cards */}
+      <View style={styles.sideBySideRow}>
+        {/* Left: How will you receive prize money? (Clickable Video Card) */}
+        <TouchableOpacity 
+          style={styles.trustCard} 
+          activeOpacity={0.8}
+          onPress={() => Alert.alert('Prize Distribution', 'Demonstrating how prize money is credited to your bank account within 24 hours.')}
+        >
+          <View style={styles.playCircle}>
+            <Play size={14} color="#0D9488" fill="#0D9488" />
+          </View>
+          <Text style={styles.trustCardTitle}>How will you receive prize money?</Text>
+          <Text style={styles.trustCardSub}>Watch video to know more</Text>
+        </TouchableOpacity>
 
-      <View style={styles.badgeRow}>
-        <View style={styles.badge}>
-          <ShieldCheck size={12} color="#059669" />
-          <Text style={styles.badgeText}>Secure policy</Text>
-        </View>
-        <Text style={styles.poweredText}>Secure payments powered by Razorpay</Text>
-      </View>
-
-      {/* Referral Card */}
-      <View style={styles.referralCard}>
-        <View style={styles.referralTop}>
-          <Share2 size={16} color="#0D9488" />
-          <Text style={styles.referralTitle}>Refer & Earn more discount</Text>
-        </View>
-        <View style={styles.linkRow}>
-          <Text style={styles.linkText} numberOfLines={1}>{referralLink}</Text>
+        {/* Right: Refund policy & Razorpay */}
+        <View style={styles.trustCard}>
           <TouchableOpacity 
-            style={styles.copyBtn} 
-            onPress={() => Alert.alert('Copied!', 'Referral link copied to clipboard.')}
+            style={styles.policyRow}
+            onPress={() => Alert.alert('Refund Policy', 'Full refund is guaranteed if a competition is rescheduled or cancelled.')}
           >
-            <Text style={styles.copyBtnText}>Copy Link</Text>
+            <ShieldCheck size={14} color="#0D9488" />
+            <Text style={styles.policyText}>Refund policy</Text>
           </TouchableOpacity>
+
+          <View style={[styles.policyRow, { marginTop: 8 }]}>
+            <ShieldCheck size={14} color="#0D9488" />
+            <View>
+              <Text style={styles.secureText}>Secure payments powered by</Text>
+              <Text style={styles.razorpayBrand}>Razorpay</Text>
+            </View>
+          </View>
         </View>
       </View>
 
-      {/* Testimonial preview */}
+      {/* 2. Refer & Earn Box */}
+      <View style={styles.referCard}>
+        <View style={styles.referLeft}>
+          <View style={styles.referHeader}>
+            <Megaphone size={16} color="#0D9488" />
+            <Text style={styles.referTitle}>{t.referTitle}</Text>
+          </View>
+
+          <View style={styles.linkRow}>
+            <TextInput 
+              value={referralLink} 
+              editable={false} 
+              style={styles.linkInput} 
+              numberOfLines={1} 
+            />
+            <TouchableOpacity 
+              style={styles.copyBtn}
+              onPress={() => Alert.alert('Copied!', 'Referral link copied to clipboard.')}
+            >
+              <Text style={styles.copyText}>{t.copyLink}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Right: Refer Now Button & Reward Text */}
+        <View style={styles.referRight}>
+          <TouchableOpacity 
+            style={styles.referNowBtn}
+            onPress={() => Alert.alert('Refer & Earn', 'Share this competition with your dancer friends to earn ₹10 per signup.')}
+          >
+            <Text style={styles.referNowText}>Refer Now</Text>
+          </TouchableOpacity>
+          <Text style={styles.earnSubText}>You earn <Text style={{ fontWeight: '800' }}>₹10</Text> for every signup</Text>
+        </View>
+      </View>
+
+      {/* 3. Hear From Our Users */}
       <TouchableOpacity 
         style={styles.testimonialRow}
-        onPress={() => Alert.alert('Community Testimonials', 'Over 12,000 dancers have won rewards on Feedants!')}
+        onPress={() => Alert.alert('Participant Testimonials', 'Read testimonials from 10,000+ dancers across India.')}
       >
-        <View style={styles.left}>
-          <MessageSquare size={16} color="#64748B" />
-          <Text style={styles.testimonialText}>Hear From Our Users</Text>
+        <View style={styles.testimonialLeft}>
+          <MessageSquare size={16} color="#1E293B" />
+          <View>
+            <Text style={styles.testimonialTitle}>{t.hearUsers}</Text>
+            <Text style={styles.testimonialSub}>See what participants say about Feedants</Text>
+          </View>
         </View>
-        <ChevronRight size={16} color="#94A3B8" />
+        <ChevronRight size={18} color="#94A3B8" />
       </TouchableOpacity>
+
+      {/* 4. Ad Here Box */}
+      <View style={styles.adBox}>
+        <Megaphone size={14} color="#94A3B8" />
+        <Text style={styles.adText}>Ad Here</Text>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { marginHorizontal: 16, marginTop: 14 },
-  trustRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FFFFFF', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0' },
-  left: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  trustText: { fontSize: 12, fontWeight: '700', color: '#1E293B' },
-  badgeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, paddingHorizontal: 4 },
-  badge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  badgeText: { fontSize: 10, fontWeight: '600', color: '#059669' },
-  poweredText: { fontSize: 9, color: '#94A3B8' },
-  referralCard: { backgroundColor: '#F0FDFA', borderWidth: 1, borderColor: '#99F6E4', borderRadius: 8, padding: 12, marginTop: 10 },
-  referralTop: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
-  referralTitle: { fontSize: 12, fontWeight: '700', color: '#0F766E' },
-  linkRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 6, borderWidth: 1, borderColor: '#CCFBF1', paddingLeft: 8 },
-  linkText: { flex: 1, fontSize: 11, color: '#64748B' },
-  copyBtn: { backgroundColor: '#0D9488', paddingVertical: 6, paddingHorizontal: 10, borderRadius: 5 },
-  copyBtnText: { color: '#FFFFFF', fontSize: 10, fontWeight: '700' },
-  testimonialRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FFFFFF', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', marginTop: 10 }
+  sideBySideRow: { flexDirection: 'row', gap: 10 },
+  trustCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 12
+  },
+  playCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#CCFBF1',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 6
+  },
+  trustCardTitle: { fontSize: 11, fontWeight: '800', color: '#1E293B' },
+  trustCardSub: { fontSize: 9, color: '#64748B', marginTop: 2 },
+  policyRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  policyText: { fontSize: 11, fontWeight: '700', color: '#1E293B' },
+  secureText: { fontSize: 9, color: '#64748B' },
+  razorpayBrand: { fontSize: 12, fontWeight: '900', color: '#032D60' },
+  referCard: {
+    backgroundColor: '#F0FDFA',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#99F6E4',
+    padding: 12,
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8
+  },
+  referLeft: { flex: 1 },
+  referHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
+  referTitle: { fontSize: 11, fontWeight: '800', color: '#0F766E' },
+  linkRow: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#CCFBF1',
+    alignItems: 'center'
+  },
+  linkInput: { flex: 1, fontSize: 10, color: '#64748B', paddingHorizontal: 6, paddingVertical: 4 },
+  copyBtn: { paddingHorizontal: 8, paddingVertical: 4, backgroundColor: '#F1F5F9', borderLeftWidth: 1, borderColor: '#E2E8F0' },
+  copyText: { fontSize: 9, fontWeight: '700', color: '#0D9488' },
+  referRight: { alignItems: 'center', width: 95 },
+  referNowBtn: { backgroundColor: '#0D9488', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 6, width: '100%', alignItems: 'center' },
+  referNowText: { color: '#FFFFFF', fontSize: 10, fontWeight: '800' },
+  earnSubText: { fontSize: 8, color: '#0F766E', textAlign: 'center', marginTop: 3 },
+  testimonialRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 12,
+    marginTop: 12
+  },
+  testimonialLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  testimonialTitle: { fontSize: 12, fontWeight: '800', color: '#1E293B' },
+  testimonialSub: { fontSize: 10, color: '#64748B' },
+  adBox: {
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#CBD5E1',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 12,
+    backgroundColor: '#F8FAFC'
+  },
+  adText: { fontSize: 12, fontWeight: '600', color: '#94A3B8' }
 });

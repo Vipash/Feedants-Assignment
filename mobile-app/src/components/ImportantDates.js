@@ -5,7 +5,7 @@ import { Calendar, Send, UploadCloud, Award } from 'lucide-react-native';
 import { translations } from '../utils/translations';
 
 const formatDate = (dateStr) => {
-  if (!dateStr) return { day: '', time: '' };
+  if (!dateStr) return { day: '10 Aug 26', time: '11:50 PM' };
   const d = new Date(dateStr);
   const day = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' });
   const time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
@@ -25,20 +25,52 @@ export default function ImportantDates({ registrationEnd, submissionStart, submi
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>{t.importantDates}</Text>
-      <View style={styles.grid}>
-        {milestones.map((item, idx) => {
-          const Icon = item.icon;
-          return (
-            <View key={idx} style={styles.box}>
-              <View style={styles.iconRow}>
-                <Icon size={14} color="#0D9488" />
-                <Text style={styles.boxLabel}>{item.label}</Text>
-              </View>
-              <Text style={styles.dateText}>{item.date.day}</Text>
-              <Text style={styles.timeText}>{item.date.time}</Text>
+      
+      {/* 2x2 Grid enclosed in the container card */}
+      <View style={styles.gridCard}>
+        {/* Row 1 */}
+        <View style={styles.gridRow}>
+          <View style={[styles.cell, styles.borderRight]}>
+            <View style={styles.iconRow}>
+              <Calendar size={15} color="#0D9488" />
+              <Text style={styles.label}>{milestones[0].label}</Text>
             </View>
-          );
-        })}
+            <Text style={styles.dateVal}>{milestones[0].date.day}</Text>
+            <Text style={styles.timeVal}>{milestones[0].date.time}</Text>
+          </View>
+
+          <View style={styles.cell}>
+            <View style={styles.iconRow}>
+              <Send size={15} color="#0D9488" />
+              <Text style={styles.label}>{milestones[1].label}</Text>
+            </View>
+            <Text style={styles.dateVal}>{milestones[1].date.day}</Text>
+            <Text style={styles.timeVal}>{milestones[1].date.time}</Text>
+          </View>
+        </View>
+
+        <View style={styles.horizontalDivider} />
+
+        {/* Row 2 */}
+        <View style={styles.gridRow}>
+          <View style={[styles.cell, styles.borderRight]}>
+            <View style={styles.iconRow}>
+              <UploadCloud size={15} color="#0D9488" />
+              <Text style={styles.label}>{milestones[2].label}</Text>
+            </View>
+            <Text style={styles.dateVal}>{milestones[2].date.day}</Text>
+            <Text style={styles.timeVal}>{milestones[2].date.time}</Text>
+          </View>
+
+          <View style={styles.cell}>
+            <View style={styles.iconRow}>
+              <Award size={15} color="#0D9488" />
+              <Text style={styles.label}>{milestones[3].label}</Text>
+            </View>
+            <Text style={styles.dateVal}>{milestones[3].date.day}</Text>
+            <Text style={styles.timeVal}>{milestones[3].date.time}</Text>
+          </View>
+        </View>
       </View>
     </View>
   );
@@ -47,10 +79,19 @@ export default function ImportantDates({ registrationEnd, submissionStart, submi
 const styles = StyleSheet.create({
   container: { marginHorizontal: 16, marginTop: 14 },
   heading: { fontSize: 14, fontWeight: '800', color: '#1E293B', marginBottom: 8 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  box: { width: '48.8%', backgroundColor: '#FFFFFF', padding: 10, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0' },
+  gridCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    overflow: 'hidden'
+  },
+  gridRow: { flexDirection: 'row' },
+  cell: { flex: 1, paddingVertical: 12, paddingHorizontal: 14 },
+  borderRight: { borderRightWidth: 1, borderColor: '#E2E8F0' },
+  horizontalDivider: { height: 1, backgroundColor: '#E2E8F0' },
   iconRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
-  boxLabel: { fontSize: 10, fontWeight: '600', color: '#64748B' },
-  dateText: { fontSize: 13, fontWeight: '800', color: '#0F172A' },
-  timeText: { fontSize: 11, fontWeight: '500', color: '#64748B' }
+  label: { fontSize: 10, fontWeight: '600', color: '#64748B' },
+  dateVal: { fontSize: 14, fontWeight: '900', color: '#0F766E' },
+  timeVal: { fontSize: 11, fontWeight: '500', color: '#64748B' }
 });

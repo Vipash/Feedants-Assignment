@@ -2,28 +2,44 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Alert } from 'react-native';
 import { Play } from 'lucide-react-native';
+import { translations } from '../utils/translations';
 
-export default function PreviousWinners({ winners = [] }) {
-  if (!winners || winners.length === 0) return null;
+export default function PreviousWinners({ winners = [], language = 'ENG' }) {
+  const t = translations[language] || translations.ENG;
+
+  const defaultWinners = [
+    { name: 'Riya Shah', rank: '1st Winner', avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200' },
+    { name: 'Aarav Mehta', rank: '1st Winner', avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200' },
+    { name: 'Neha Verma', rank: '2nd Winner', avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200' },
+    { name: 'Ishita Chouhan', rank: '3rd Winner', avatarUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200' }
+  ];
+
+  const list = winners.length > 0 ? winners : defaultWinners;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Previous Winners</Text>
+      <Text style={styles.heading}>{t.previousWinners}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        {winners.map((winner, idx) => (
+        {list.map((winner, idx) => (
           <TouchableOpacity 
             key={idx} 
             style={styles.card} 
             activeOpacity={0.8}
-            onPress={() => Alert.alert('Winner Performance', `Playing winning performance by ${winner.name}`)}
+            onPress={() => Alert.alert('Previous Winner', `Playing winning classical performance of ${winner.name}`)}
           >
-            <View style={styles.imageWrapper}>
-              <Image source={{ uri: winner.avatarUrl }} style={styles.avatar} />
-              <View style={styles.playBadge}>
-                <Play size={10} color="#FFFFFF" fill="#FFFFFF" />
+            {/* Square Image with floating play circle */}
+            <View style={styles.imgContainer}>
+              <Image source={{ uri: winner.avatarUrl }} style={styles.thumbnail} />
+              <View style={styles.playCircle}>
+                <Play size={10} color="#0D9488" fill="#0D9488" />
               </View>
             </View>
-            <Text style={styles.name} numberOfLines={1}>{winner.name}</Text>
+
+            {/* Name and Rank beside the image */}
+            <View style={styles.meta}>
+              <Text style={styles.name} numberOfLines={1}>{winner.name}</Text>
+              <Text style={styles.rank}>{winner.rank || '1st Winner'}</Text>
+            </View>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -34,10 +50,34 @@ export default function PreviousWinners({ winners = [] }) {
 const styles = StyleSheet.create({
   container: { marginHorizontal: 16, marginTop: 14 },
   heading: { fontSize: 14, fontWeight: '800', color: '#1E293B', marginBottom: 8 },
-  scroll: { gap: 12, paddingRight: 16 },
-  card: { alignItems: 'center', width: 70 },
-  imageWrapper: { position: 'relative' },
-  avatar: { width: 56, height: 56, borderRadius: 28, borderWidth: 2, borderColor: '#0D9488' },
-  playBadge: { position: 'absolute', bottom: 0, right: 0, backgroundColor: '#0D9488', width: 18, height: 18, borderRadius: 9, justifyContent: 'center', alignItems: 'center' },
-  name: { fontSize: 11, fontWeight: '600', color: '#334155', marginTop: 4, textAlign: 'center' }
+  scroll: { gap: 10, paddingRight: 16 },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    padding: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 8,
+    width: 145
+  },
+  imgContainer: { position: 'relative' },
+  thumbnail: { width: 50, height: 50, borderRadius: 10, backgroundColor: '#E2E8F0' },
+  playCircle: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    backgroundColor: '#FFFFFF',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#0D9488',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  meta: { flex: 1 },
+  name: { fontSize: 11, fontWeight: '800', color: '#1E293B' },
+  rank: { fontSize: 10, fontWeight: '700', color: '#0D9488', marginTop: 2 }
 });

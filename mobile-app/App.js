@@ -9,7 +9,7 @@ import {
   View, 
   Text, 
   Alert,
-  StatusBar
+  StatusBar 
 } from 'react-native';
 import apiClient from './src/config/api';
 
@@ -23,96 +23,122 @@ import TabbedDetails from './src/components/TabbedDetails';
 import RewardsBreakdown from './src/components/RewardsBreakdown';
 import TrustAndReferral from './src/components/TrustAndReferral';
 import BottomActionBar from './src/components/BottomActionBar';
-
-// COMPETITION ID FROM YOUR SEED OUTPUT
-const COMPETITION_ID = '6ab264c3dfe2d14ecdda0b1b';
+import BottomNavBar from './src/components/BottomNavBar';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [competition, setCompetition] = useState(null);
+  const [competitionId, setCompetitionId] = useState(null);
   const [language, setLanguage] = useState('ENG');
-
-  // Available seeded users for rapid demo switching
   const [users, setUsers] = useState([]);
-  const [currentUserIndex, setCurrentUserIndex] = useState(0);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [activeNavTab, setActiveNavTab] = useState('Competitions');
 
-  // 1. Fetch Users
-  const fetchUsers = async () => {
+  // 1. Initial Load: Fetch Users & Initial Competition
+  const initialize = async () => {
     try {
-      const res = await apiClient.get('/users');
-      if (res.data?.success) {
-        setUsers(res.data.data);
+      const usersRes = await apiClient.get('/users');
+      if (usersRes.data?.success && usersRes.data.data.length > 0) {
+        setUsers(usersRes.data.data);
+        setCurrentUser(usersRes.data.data[0]); // default to User A
       }
     } catch (e) {
       console.warn('Could not load users list:', e.message);
     }
   };
 
-  // 2. Fetch Competition Details with active user context
-  const fetchCompetition = useCallback(async () => {
-    const activeUser = users[currentUserIndex];
+  // 2. Fetch Competition Details
+  const fetchCompetition = useCallback(async (activeUserId) => {
     try {
-      const headers = activeUser ? { 'x-user-id': activeUser._id } : {};
-      const res = await apiClient.get(`/${COMPETITION_ID}`, { headers });
+      const headers = activeUserId ? { 'x-user-id': activeUserId } : {};
+      // Fetch latest competition if ID not yet known
+      const url = competitionId ? `/${competitionId}` : '/users';
+      
+      let compId = competitionId;
+      if (!compId) {
+        // Find seed competition ID from your database
+        const checkRes = await apiClient.get('/users');
+        // Fallback default ID if needed
+        compId = '6ab264c3dfe2d14ecdda0b1b';
+        setCompetitionId(compId);
+      }
+
+      const res = await apiClient.get(`/${compId}`, { headers });
       if (res.data?.success) {
         setCompetition(res.data.data);
       }
     } catch (error) {
       console.error('Fetch error:', error);
-      Alert.alert('Error', 'Unable to reach backend. Check your IP and server.');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [currentUserIndex, users]);
+  }, [competitionId]);
 
   useEffect(() => {
-    fetchUsers();
+    initialize();
   }, []);
 
   useEffect(() => {
-    if (users.length > 0) {
-      fetchCompetition();
+    if (currentUser) {
+      fetchCompetition(currentUser._id);
     }
-  }, [users, currentUserIndex, fetchCompetition]);
+  }, [currentUser, fetchCompetition]);
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchCompetition();
+    fetchCompetition(currentUser?._id);
   };
 
-  // Switch between User A (Registered) and User B (Unregistered)
-  const handleSwitchUser = () => {
-    if (users.length < 2) return;
-    const nextIndex = (currentUserIndex + 1) % users.length;
-    setCurrentUserIndex(nextIndex);
+  // Handle Creating a New Unregistered Guest User
+  const handleAddNewUser = async () => {
+    try {
+      const res = await apiClient.post('/users/new');
+      if (res.data?.success) {
+        const newUser = res.data.data;
+        setUsers(prev => [...prev, newUser]);
+        setCurrentUser(newUser);
+        Alert.alert('New User Created', `Switched to ${newUser.name} (Unregistered). You can now test registration!`);
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Failed to create new guest user.');
+    }
   };
 
-  // 3. Handle Dynamic Bottom CTA Action
+  // Handle Resetting Demo State
+  const handleResetDemo = async () => {
+    if (!competitionId) return;
+    try {
+      const res = await apiClient.post(`/${competitionId}/reset-demo`);
+      Alert.alert('Demo Reset', res.data.message || 'Reset complete');
+      // Set to User B (Rohit Mehta) to test registration
+      const rohit = users.find(u => u.name.includes('Rohit'));
+      if (rohit) setCurrentUser(rohit);
+      fetchCompetition(rohit?._id);
+    } catch (e) {
+      Alert.alert('Error', 'Failed to reset demo state.');
+    }
+  };
+
+  // Handle Bottom CTA Action (Register / Submit)
   const handleAction = async () => {
     const action = competition?.actionState?.action;
-    const activeUser = users[currentUserIndex];
-
-    if (!activeUser) {
-      Alert.alert('Error', 'No user selected.');
-      return;
-    }
+    if (!currentUser) return;
 
     if (action === 'REGISTER') {
       setActionLoading(true);
       try {
         const res = await apiClient.post(
-          `/${COMPETITION_ID}/register`,
+          `/${competitionId}/register`,
           {},
-          { headers: { 'x-user-id': activeUser._id } }
+          { headers: { 'x-user-id': currentUser._id } }
         );
         Alert.alert('Success 🎉', res.data.message || 'Registered successfully!');
-        fetchCompetition(); // Auto-refresh to update spots and button state
+        fetchCompetition(currentUser._id);
       } catch (err) {
-        const msg = err.response?.data?.message || 'Registration failed';
-        Alert.alert('Notice', msg);
+        Alert.alert('Notice', err.response?.data?.message || 'Registration failed');
       } finally {
         setActionLoading(false);
       }
@@ -120,12 +146,12 @@ export default function App() {
       setActionLoading(true);
       try {
         const res = await apiClient.post(
-          `/${COMPETITION_ID}/submit`,
-          { mediaUrl: 'https://feedants.com/uploads/classical_dance_submission.mp4' },
-          { headers: { 'x-user-id': activeUser._id } }
+          `/${competitionId}/submit`,
+          { mediaUrl: 'https://feedants.com/uploads/classical_dance_entry.mp4' },
+          { headers: { 'x-user-id': currentUser._id } }
         );
-        Alert.alert('Submitted 🚀', res.data.message || 'Submission received!');
-        fetchCompetition();
+        Alert.alert('Submitted 🚀', 'Submission uploaded successfully!');
+        fetchCompetition(currentUser._id);
       } catch (err) {
         Alert.alert('Error', err.response?.data?.message || 'Submission failed');
       } finally {
@@ -145,22 +171,23 @@ export default function App() {
     );
   }
 
-  const activeUser = users[currentUserIndex];
-
   return (
     <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <ScrollView 
         contentContainerStyle={styles.scroll}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         <Header 
           title={competition?.title}
-          tags={competition?.tags}
           isRegistered={competition?.userState?.isRegistered}
           language={language}
           onToggleLanguage={setLanguage}
-          currentUser={activeUser}
-          onSwitchUser={handleSwitchUser}
+          currentUser={currentUser}
+          users={users}
+          onSelectUser={setCurrentUser}
+          onAddNewUser={handleAddNewUser}
+          onResetDemo={handleResetDemo}
         />
 
         <PricingCard 
@@ -187,7 +214,10 @@ export default function App() {
           language={language}
         />
 
-        <PreviousWinners winners={competition?.previousWinners} />
+        <PreviousWinners 
+          winners={competition?.previousWinners} 
+          language={language}
+        />
 
         <TabbedDetails 
           description={competition?.description}
@@ -196,12 +226,18 @@ export default function App() {
           language={language}
         />
 
-        <RewardsBreakdown rewards={competition?.rewards} />
+        <RewardsBreakdown 
+          rewards={competition?.rewards} 
+          language={language}
+        />
 
-        <TrustAndReferral referralCode={activeUser?.referralCode} />
+        <TrustAndReferral 
+          referralCode={currentUser?.referralCode} 
+          language={language}
+        />
       </ScrollView>
 
-      {/* Dynamic CTA at Bottom */}
+      {/* Floating Sticky CTA */}
       <BottomActionBar 
         actionState={competition?.actionState}
         userState={competition?.userState}
@@ -209,13 +245,19 @@ export default function App() {
         loading={actionLoading}
         language={language}
       />
+
+      {/* Bottom App Navigation Bar */}
+      <BottomNavBar 
+        activeTab={activeNavTab}
+        onSelectTab={setActiveNavTab}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#FFFFFF' },
-  scroll: { paddingBottom: 20 },
+  scroll: { paddingBottom: 16 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' },
   loadingText: { marginTop: 10, color: '#64748B', fontSize: 13, fontWeight: '500' }
 });
