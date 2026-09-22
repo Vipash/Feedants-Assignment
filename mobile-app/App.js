@@ -8,7 +8,8 @@ import {
   ActivityIndicator, 
   View, 
   Text, 
-  Alert 
+  Alert,
+  StatusBar
 } from 'react-native';
 import apiClient from './src/config/api';
 
