@@ -43,7 +43,7 @@ async function seed() {
       name: 'Manju Dubey',
       title: 'Professional Kathak Dancer',
       experience: '12+ Years of Experience',
-      avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200',
+      avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300', // Authentic formal portrait
       mediaUrl: 'https://example.com/judge_intro.mp4'
     },
     registrationStartDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
@@ -74,24 +74,24 @@ async function seed() {
     ],
     previousWinners: [
       {
-        name: 'Riya Shah',
+        name: 'Riya Parashar',
         rank: '1st Winner',
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200'
+        avatarUrl: 'https://images.unsplash.com/photo-1609137144822-38605c48b788?w=300'
       },
       {
-        name: 'Aarav Mehta',
+        name: 'Vinod Kumar',
         rank: '1st Winner',
-        avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200'
+        avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300'
       },
       {
-        name: 'Neha Verma',
+        name: 'Neha Choudhary',
         rank: '2nd Winner',
-        avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200'
+        avatarUrl: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=300'
       },
       {
-        name: 'Ishita Chouhan',
+        name: 'Ishita Dhariwal',
         rank: '3rd Winner',
-        avatarUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200'
+        avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300'
       }
     ]
   });
@@ -104,7 +104,7 @@ async function seed() {
     status: 'CONFIRMED'
   });
 
-  console.log('\n=== RE-SEEDED WITH 6 REWARDS & PREVIOUS WINNERS ===');
+  console.log('\n=== RE-SEEDED WITH UPDATED AUTHENTIC IMAGE URLS ===');
   console.log(`Competition ID: ${competition._id}`);
   console.log(`User A (Registered): ${userA._id}`);
   console.log(`User B (Unregistered): ${userB._id}`);
