@@ -2,6 +2,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Calendar, Send, UploadCloud, Award } from 'lucide-react-native';
+import { translations } from '../utils/translations';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return { day: '', time: '' };
@@ -11,17 +12,19 @@ const formatDate = (dateStr) => {
   return { day, time };
 };
 
-export default function ImportantDates({ registrationEnd, submissionStart, submissionEnd, resultDate }) {
+export default function ImportantDates({ registrationEnd, submissionStart, submissionEnd, resultDate, language = 'ENG' }) {
+  const t = translations[language] || translations.ENG;
+
   const milestones = [
-    { label: 'Register Before', icon: Calendar, date: formatDate(registrationEnd) },
-    { label: 'Submission Starts', icon: Send, date: formatDate(submissionStart) },
-    { label: 'Submission Ends', icon: UploadCloud, date: formatDate(submissionEnd) },
-    { label: 'Result Date', icon: Award, date: formatDate(resultDate) }
+    { label: t.registerBefore, icon: Calendar, date: formatDate(registrationEnd) },
+    { label: t.submissionStarts, icon: Send, date: formatDate(submissionStart) },
+    { label: t.submissionEnds, icon: UploadCloud, date: formatDate(submissionEnd) },
+    { label: t.resultDate, icon: Award, date: formatDate(resultDate) }
   ];
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Important Dates</Text>
+      <Text style={styles.heading}>{t.importantDates}</Text>
       <View style={styles.grid}>
         {milestones.map((item, idx) => {
           const Icon = item.icon;

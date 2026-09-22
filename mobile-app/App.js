@@ -169,17 +169,22 @@ export default function App() {
           totalCapacity={competition?.totalCapacity}
           bookedSpots={competition?.bookedSpots}
           remainingSpots={competition?.remainingSpots}
+          language={language}
         />
 
         <JudgeCard judge={competition?.judge} />
 
-        <CountdownTimer targetDate={competition?.registrationEndDate} />
+        <CountdownTimer 
+          targetDate={competition?.registrationEndDate} 
+          language={language}
+        />
 
         <ImportantDates 
           registrationEnd={competition?.registrationEndDate}
           submissionStart={competition?.submissionStartDate}
           submissionEnd={competition?.submissionEndDate}
           resultDate={competition?.resultDate}
+          language={language}
         />
 
         <PreviousWinners winners={competition?.previousWinners} />
@@ -188,6 +193,7 @@ export default function App() {
           description={competition?.description}
           parameters={competition?.judgingParameters}
           rules={competition?.rulesAndEligibility}
+          language={language}
         />
 
         <RewardsBreakdown rewards={competition?.rewards} />
@@ -201,6 +207,7 @@ export default function App() {
         userState={competition?.userState}
         onAction={handleAction}
         loading={actionLoading}
+        language={language}
       />
     </SafeAreaView>
   );

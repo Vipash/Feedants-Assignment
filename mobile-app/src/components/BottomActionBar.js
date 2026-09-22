@@ -1,10 +1,22 @@
 // mobile-app/src/components/BottomActionBar.js
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { UploadCloud, CheckCircle2, AlertCircle } from 'lucide-react-native';
+import { UploadCloud, CheckCircle2 } from 'lucide-react-native';
+import { translations } from '../utils/translations';
 
-export default function BottomActionBar({ actionState, userState, onAction, loading }) {
+export default function BottomActionBar({ actionState, userState, onAction, loading, language = 'ENG' }) {
+  const t = translations[language] || translations.ENG;
   const isEnabled = actionState?.enabled && !loading;
+
+  // Resolve dynamic label with localization
+  let buttonLabel = actionState?.label || t.registerNow;
+  if (actionState?.action === 'REGISTER') {
+    buttonLabel = t.registerNow;
+  } else if (actionState?.action === 'SUBMIT') {
+    buttonLabel = t.uploadSubmission;
+  } else if (actionState?.action === 'VIEW_SUBMISSION') {
+    buttonLabel = t.submissionUploaded;
+  }
 
   return (
     <View style={styles.container}>
@@ -28,9 +40,9 @@ export default function BottomActionBar({ actionState, userState, onAction, load
               <CheckCircle2 size={18} color="#FFFFFF" />
             )}
             <View style={styles.textStack}>
-              <Text style={styles.buttonLabel}>{actionState?.label || 'Register Now'}</Text>
+              <Text style={styles.buttonLabel}>{buttonLabel}</Text>
               {userState?.isRegistered && (
-                <Text style={styles.subText}>Registered</Text>
+                <Text style={styles.subText}>{t.registered}</Text>
               )}
             </View>
           </View>
@@ -53,35 +65,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 4
   },
-  actionButton: {
-    backgroundColor: '#0D9488',
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  registeredActionButton: {
-    backgroundColor: '#0F766E'
-  },
-  disabledButton: {
-    backgroundColor: '#94A3B8'
-  },
-  btnContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8
-  },
-  textStack: {
-    alignItems: 'center'
-  },
-  buttonLabel: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800'
-  },
-  subText: {
-    color: '#CCFBF1',
-    fontSize: 10,
-    fontWeight: '600'
-  }
+  actionButton: { backgroundColor: '#0D9488', borderRadius: 10, paddingVertical: 12, alignItems: 'center', justifyContent: 'center' },
+  registeredActionButton: { backgroundColor: '#0F766E' },
+  disabledButton: { backgroundColor: '#94A3B8' },
+  btnContent: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  textStack: { alignItems: 'center' },
+  buttonLabel: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' },
+  subText: { color: '#CCFBF1', fontSize: 10, fontWeight: '600' }
 });

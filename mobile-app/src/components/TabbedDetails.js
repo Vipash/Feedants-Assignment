@@ -1,44 +1,44 @@
 // mobile-app/src/components/TabbedDetails.js
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { translations } from '../utils/translations';
 
-export default function TabbedDetails({ description, parameters = [], rules = [] }) {
+export default function TabbedDetails({ description, parameters = [], rules = [], language = 'ENG' }) {
+  const t = translations[language] || translations.ENG;
   const [activeTab, setActiveTab] = useState('ABOUT');
   const [expanded, setExpanded] = useState(false);
 
   return (
     <View style={styles.container}>
-      {/* Tabs */}
       <View style={styles.tabBar}>
         <TouchableOpacity 
           style={[styles.tab, activeTab === 'ABOUT' && styles.activeTab]} 
           onPress={() => setActiveTab('ABOUT')}
         >
-          <Text style={[styles.tabText, activeTab === 'ABOUT' && styles.activeTabText]}>About Competition</Text>
+          <Text style={[styles.tabText, activeTab === 'ABOUT' && styles.activeTabText]}>{t.tabAbout}</Text>
         </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.tab, activeTab === 'JUDGING' && styles.activeTab]} 
           onPress={() => setActiveTab('JUDGING')}
         >
-          <Text style={[styles.tabText, activeTab === 'JUDGING' && styles.activeTabText]}>Judging Parameters</Text>
+          <Text style={[styles.tabText, activeTab === 'JUDGING' && styles.activeTabText]}>{t.tabJudging}</Text>
         </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.tab, activeTab === 'RULES' && styles.activeTab]} 
           onPress={() => setActiveTab('RULES')}
         >
-          <Text style={[styles.tabText, activeTab === 'RULES' && styles.activeTabText]}>Rules & Eligibility</Text>
+          <Text style={[styles.tabText, activeTab === 'RULES' && styles.activeTabText]}>{t.tabRules}</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Tab Content */}
       <View style={styles.contentBox}>
         {activeTab === 'ABOUT' && (
           <>
             <Text style={styles.bodyText} numberOfLines={expanded ? undefined : 2}>
-              {description || 'This is an online classical dance competition open for all age groups. Participate from anywhere and showcase your talent. Express your passion through traditional dance.'}
+              {language === 'HINDI' ? t.aboutText : (description || t.aboutText)}
             </Text>
             <TouchableOpacity onPress={() => setExpanded(!expanded)} style={styles.expandBtn}>
-              <Text style={styles.expandText}>{expanded ? 'View less ▲' : 'View more ▼'}</Text>
+              <Text style={styles.expandText}>{expanded ? t.viewLess : t.viewMore}</Text>
             </TouchableOpacity>
           </>
         )}
