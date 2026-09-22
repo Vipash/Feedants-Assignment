@@ -1,7 +1,6 @@
+# Feedants — Competition Details Screen (Full-Stack Module)
 [![CI Pipeline](https://github.com/Vipash/Feedants-Assignment/actions/workflows/ci.yml/badge.svg)](https://github.com/Vipash/Feedants-Assignment/actions/workflows/ci.yml)
 
-```markdown
-# Feedants — Competition Details Screen (Full-Stack Module)
 
 A production-grade, highly scalable Competition Details module built with **React Native (Expo)**, **Node.js / Express**, and **MongoDB Atlas**. Designed to handle real-world competition lifecycles, race-condition-free spot reservations under high concurrency, and multi-state participant flows.
 
