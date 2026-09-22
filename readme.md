@@ -1,3 +1,5 @@
+[![CI Pipeline](https://github.com/Vipash/Feedants-Assignment/actions/workflows/ci.yml/badge.svg)](https://github.com/Vipash/Feedants-Assignment/actions/workflows/ci.yml)
+
 ```markdown
 # Feedants — Competition Details Screen (Full-Stack Module)
 
