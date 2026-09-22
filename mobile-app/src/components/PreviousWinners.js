@@ -8,10 +8,10 @@ export default function PreviousWinners({ winners = [], language = 'ENG' }) {
   const t = translations[language] || translations.ENG;
 
   const defaultWinners = [
-    { name: 'Riya Shah', rank: '1st Winner', avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200' },
-    { name: 'Aarav Mehta', rank: '1st Winner', avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200' },
-    { name: 'Neha Verma', rank: '2nd Winner', avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200' },
-    { name: 'Ishita Chouhan', rank: '3rd Winner', avatarUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200' }
+    { name: 'Riya Parashar', rank: '1st Winner', avatarUrl: 'https://images.unsplash.com/photo-1609137144822-38605c48b788?w=300' },
+    { name: 'Vinod Kumar', rank: '1st Winner', avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300' },
+    { name: 'Neha Choudhary', rank: '2nd Winner', avatarUrl: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=300' },
+    { name: 'Ishita Dhariwal', rank: '3rd Winner', avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300' }
   ];
 
   const list = winners.length > 0 ? winners : defaultWinners;

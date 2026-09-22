@@ -32,20 +32,15 @@ export default function BottomNavBar({ activeTab = 'Competitions', onSelectTab }
         const isActive = activeTab === tab.name;
 
         return (
-          <TouchableOpacity 
-            key={idx} 
-            style={styles.tab} 
-            activeOpacity={0.7}
-            onPress={() => {
-              if (tab.name !== 'Competitions') {
-                Alert.alert(tab.name, `Navigating to ${tab.name} feed.`);
-              }
-              onSelectTab?.(tab.name);
-            }}
-          >
-            <Icon size={19} color={isActive ? '#0D9488' : '#94A3B8'} />
-            <Text style={[styles.tabLabel, isActive && styles.activeTabLabel]}>{tab.name}</Text>
-          </TouchableOpacity>
+            <TouchableOpacity 
+                key={idx} 
+                style={styles.tab} 
+                activeOpacity={0.7}
+                onPress={() => onSelectTab?.(tab.name)}
+                >
+                <Icon size={19} color={isActive ? '#0D9488' : '#94A3B8'} />
+                <Text style={[styles.tabLabel, isActive && styles.activeTabLabel]}>{tab.name}</Text>
+            </TouchableOpacity>
         );
       })}
     </View>
