@@ -76,7 +76,7 @@ async function seed() {
       {
         name: 'Riya Parashar',
         rank: '1st Winner',
-        avatarUrl: 'https://images.unsplash.com/photo-1609137144822-38605c48b788?w=300'
+        avatarUrl: 'https://images.unsplash.com/photo-1707198134558-202f99242d15?w=300'
       },
       {
         name: 'Vinod Kumar',
