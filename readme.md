@@ -430,3 +430,5 @@ For capacity management up to thousands of concurrent users, MongoDB document-le
 ## 📄 License
 
 This project is licensed under the MIT License. See the [LICENSE](https://github.com/Vipash/Feedants-Assignment/blob/main/LICENSE) file for details.
+
+---
