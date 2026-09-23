@@ -44,7 +44,7 @@ async function seed() {
       title: 'Professional Kathak Dancer',
       experience: '12+ Years of Experience',
       avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300', // Authentic formal portrait
-      mediaUrl: 'https://example.com/judge_intro.mp4'
+      mediaUrl: 'https://www.youtube.com/watch?v=5CvwgC-WQlo'
     },
     registrationStartDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
     registrationEndDate: new Date(now.getTime() + 1.25 * 24 * 60 * 60 * 1000), // ~1d 6h

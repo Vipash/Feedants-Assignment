@@ -2,14 +2,17 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Home, Compass, Plus, Trophy, User } from 'lucide-react-native';
+import { translations } from '../utils/translations';
 
-export default function BottomNavBar({ activeTab = 'Competitions', onSelectTab }) {
+export default function BottomNavBar({ activeTab = 'Competitions', onSelectTab, language = 'ENG' }) {
+  const t = translations[language] || translations.ENG;
+
   const tabs = [
-    { name: 'Home', icon: Home },
-    { name: 'Explore', icon: Compass },
+    { name: 'Home', label: t.nav?.home || 'Home', icon: Home },
+    { name: 'Explore', label: t.nav?.explore || 'Explore', icon: Compass },
     { name: 'Add', isFab: true },
-    { name: 'Competitions', icon: Trophy },
-    { name: 'Profile', icon: User }
+    { name: 'Competitions', label: t.nav?.comp || 'Competitions', icon: Trophy },
+    { name: 'Profile', label: t.nav?.profile || 'Profile', icon: User }
   ];
 
   return (
@@ -32,15 +35,17 @@ export default function BottomNavBar({ activeTab = 'Competitions', onSelectTab }
         const isActive = activeTab === tab.name;
 
         return (
-            <TouchableOpacity 
-                key={idx} 
-                style={styles.tab} 
-                activeOpacity={0.7}
-                onPress={() => onSelectTab?.(tab.name)}
-                >
-                <Icon size={19} color={isActive ? '#0D9488' : '#94A3B8'} />
-                <Text style={[styles.tabLabel, isActive && styles.activeTabLabel]}>{tab.name}</Text>
-            </TouchableOpacity>
+          <TouchableOpacity 
+            key={idx} 
+            style={styles.tab} 
+            activeOpacity={0.7}
+            onPress={() => onSelectTab?.(tab.name)}
+          >
+            <Icon size={19} color={isActive ? '#0D9488' : '#94A3B8'} />
+            <Text style={[styles.tabLabel, isActive && styles.activeTabLabel]}>
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
         );
       })}
     </View>
@@ -55,7 +60,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: '#E2E8F0',
     alignItems: 'center',
-    justifyContent: 'space-around',
+    justify: 'space-around',
     paddingHorizontal: 8,
     paddingBottom: 4,
     overflow: 'visible' // Allows FAB button to pop up cleanly without clipping
@@ -68,7 +73,7 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     backgroundColor: '#0D9488',
-    justifyContent: 'center',
+    justify: 'center',
     alignItems: 'center',
     marginTop: -20, // Clean vertical offset
     elevation: 6,

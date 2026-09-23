@@ -214,7 +214,7 @@ export default function App() {
             language={language}
           />
 
-          <JudgeCard judge={competition?.judge} />
+          <JudgeCard judge={competition?.judge} language={language} />
 
           <CountdownTimer 
             targetDate={competition?.registrationEndDate} 
@@ -281,6 +281,7 @@ export default function App() {
       <BottomNavBar 
         activeTab={activeNavTab}
         onSelectTab={setActiveNavTab}
+        language={language}
       />
     </SafeAreaView>
   );

@@ -35,7 +35,9 @@ export default function RewardsBreakdown({ rewards = [], language = 'ENG' }) {
           <View key={idx} style={[styles.row, idx === rewardList.length - 1 && styles.noBorder]}>
             <View style={styles.leftCol}>
               {getRankIcon(idx)}
-              <Text style={styles.rankTitle}>{reward.rankTitle}</Text>
+              <Text style={styles.rankTitle}>
+                {language === 'HINDI' && t.ranks && t.ranks[idx] ? t.ranks[idx] : reward.rankTitle}
+              </Text>
             </View>
             <Text style={styles.amount}>₹ {reward.amount}</Text>
           </View>
@@ -55,7 +57,7 @@ const styles = StyleSheet.create({
   card: { backgroundColor: '#FFFFFF', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0' },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justify: 'space-between',
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 16,

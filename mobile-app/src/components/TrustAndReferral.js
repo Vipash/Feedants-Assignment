@@ -22,29 +22,29 @@ export default function TrustAndReferral({ referralCode, language = 'ENG' }) {
         <TouchableOpacity 
           style={styles.trustCard} 
           activeOpacity={0.8}
-          onPress={() => Alert.alert('Prize Distribution', 'Demonstrating how prize money is credited to your bank account within 24 hours.')}
+          onPress={() => Alert.alert(t.faqPrize, 'Demonstrating how prize money is credited to your bank account within 24 hours.')}
         >
           <View style={styles.playCircle}>
             <Play size={14} color="#0D9488" fill="#0D9488" />
           </View>
-          <Text style={styles.trustCardTitle}>How will you receive prize money?</Text>
-          <Text style={styles.trustCardSub}>Watch video to know more</Text>
+          <Text style={styles.trustCardTitle}>{t.faqPrize}</Text>
+          <Text style={styles.trustCardSub}>{t.watchVideo}</Text>
         </TouchableOpacity>
 
         {/* Right: Refund policy & Razorpay */}
         <View style={styles.trustCard}>
           <TouchableOpacity 
             style={styles.policyRow}
-            onPress={() => Alert.alert('Refund Policy', 'Full refund is guaranteed if a competition is rescheduled or cancelled.')}
+            onPress={() => Alert.alert(t.refundPolicy, 'Full refund is guaranteed if a competition is rescheduled or cancelled.')}
           >
             <ShieldCheck size={14} color="#0D9488" />
-            <Text style={styles.policyText}>Refund policy</Text>
+            <Text style={styles.policyText}>{t.refundPolicy}</Text>
           </TouchableOpacity>
 
           <View style={[styles.policyRow, { marginTop: 8 }]}>
             <ShieldCheck size={14} color="#0D9488" />
             <View>
-              <Text style={styles.secureText}>Secure payments powered by</Text>
+              <Text style={styles.secureText}>{t.securePayments}</Text>
               <Text style={styles.razorpayBrand}>Razorpay</Text>
             </View>
           </View>
@@ -79,24 +79,24 @@ export default function TrustAndReferral({ referralCode, language = 'ENG' }) {
         <View style={styles.referRight}>
           <TouchableOpacity 
             style={styles.referNowBtn}
-            onPress={() => Alert.alert('Refer & Earn', 'Share this competition with your dancer friends to earn ₹10 per signup.')}
+            onPress={() => Alert.alert(t.referTitle, 'Share this competition with your dancer friends to earn ₹10 per signup.')}
           >
-            <Text style={styles.referNowText}>Refer Now</Text>
+            <Text style={styles.referNowText}>{t.referNow}</Text>
           </TouchableOpacity>
-          <Text style={styles.earnSubText}>You earn <Text style={{ fontWeight: '800' }}>₹10</Text> for every signup</Text>
+          <Text style={styles.earnSubText}>{t.earnSignup}</Text>
         </View>
       </View>
 
       {/* 3. Hear From Our Users */}
       <TouchableOpacity 
         style={styles.testimonialRow}
-        onPress={() => Alert.alert('Participant Testimonials', 'Read testimonials from 10,000+ dancers across India.')}
+        onPress={() => Alert.alert(t.hearUsers, 'Read testimonials from 10,000+ dancers across India.')}
       >
         <View style={styles.testimonialLeft}>
           <MessageSquare size={16} color="#1E293B" />
           <View>
             <Text style={styles.testimonialTitle}>{t.hearUsers}</Text>
-            <Text style={styles.testimonialSub}>See what participants say about Feedants</Text>
+            <Text style={styles.testimonialSub}>{t.hearUsersSub}</Text>
           </View>
         </View>
         <ChevronRight size={18} color="#94A3B8" />
@@ -105,7 +105,7 @@ export default function TrustAndReferral({ referralCode, language = 'ENG' }) {
       {/* 4. Ad Here Box */}
       <View style={styles.adBox}>
         <Megaphone size={14} color="#94A3B8" />
-        <Text style={styles.adText}>Ad Here</Text>
+        <Text style={styles.adText}>{t.adHere}</Text>
       </View>
     </View>
   );
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   earnSubText: { fontSize: 8, color: '#0F766E', textAlign: 'center', marginTop: 3 },
   testimonialRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justify: 'space-between',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
-    justifyContent: 'center',
+    justify: 'center',
     flexDirection: 'row',
     gap: 6,
     marginTop: 12,

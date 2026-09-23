@@ -8,7 +8,7 @@ import {
   Platform, 
   StatusBar, 
   Modal,
-  ScrollView 
+  ScrollView
 } from 'react-native';
 import { ArrowLeft, CheckCircle2, User, Trophy, Plus, RotateCcw, X } from 'lucide-react-native';
 import { translations } from '../utils/translations';
