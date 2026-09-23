@@ -150,7 +150,7 @@ exports.registerForCompetition = async (req, res) => {
         competitionId: id,
         userId,
         status: 'CONFIRMED',
-        paymentStatus: 'COMPLETED'
+        paymentStatus: 'SIMULATED'
       });
 
       return res.status(201).json({

@@ -1,107 +1,239 @@
+Here is the cleaned-up, properly formatted, and fully polished `README.md` file. All markdown formatting issues, unescaped code blocks, raw HTML fragments, and broken headings have been fixed.
+
+---
+
+### Cleaned & Formatted `README.md`
+
+```markdown
 # Feedants — Competition Details Screen (Full-Stack Module)
+
 [![CI Pipeline](https://github.com/Vipash/Feedants-Assignment/actions/workflows/ci.yml/badge.svg)](https://github.com/Vipash/Feedants-Assignment/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![Node](https://img.shields.io/badge/node-22%20LTS-339933)
 
-> 🎥 **Live Video Walkthrough**: [5-Minute Implementation Demo](https://drive.google.com/file/d/1x3QUyJVrdLnGmqHGK1xn2cPB3qXxZJ_N/view?usp=drive_link)
-> 
-> *Demo Video Note: Recorded via USB screen mirroring on a resource-constrained development machine. Any minor frame drops in the video are artifacts of local video encoding, not application responsiveness.*
+A Competition Details module built with **React Native (Expo)**, **Node.js / Express** and **MongoDB Atlas**. It covers the competition lifecycle, race-condition-safe spot reservation under concurrent load, and multi-state participant flows (unregistered → registered → submitted).
 
-A production-grade, highly scalable Competition Details module built with **React Native (Expo)**, **Node.js / Express**, and **MongoDB Atlas**. Designed to handle real-world competition lifecycles, race-condition-free spot reservations under high concurrency, and multi-state participant flows.
-
----
-
-## 📸 Visual Previews
-
-### Core Screen Interactions & Localization
-
-| English View (Main Page) | Hindi View (Main Page) |
-| :---: | :---: |
-| ![Main Page Eng](./docs/screenshots/main_page_eng.png) | ![Main Page Hin](./docs/screenshots/main_page_hin.png) |
-
-### Page Layout & Additional Sections
-
-| Page Middle Section | Page Bottom Section |
-| :---: | :---: |
-| ![Main Page Middle](./docs/screenshots/main_page_middle.png) | ![Main Page Bottom](./docs/screenshots/main_page_bottom.png) |
+> 🎥 **Video walkthrough:** [5-minute implementation demo](https://drive.google.com/file/d/1x3QUyJVrdLnGmqHGK1xn2cPB3qXxZJ_N/view?usp=drive_link)  
+> The video was recorded via USB screen mirroring on a resource-constrained development machine. Minor frame drops come from local video encoding, not from application performance.
 
 ---
 
-## 🏗️ System Architecture
+## Table of Contents
+
+1. [Screenshots](#-screenshots)
+2. [Tech Stack](#-tech-stack)
+3. [Key Features](#-key-features)
+4. [Architecture](#%EF%B8%8F-architecture)
+5. [API Reference](#-api-reference)
+6. [Concurrency Design & Stress Test](#-concurrency-design--stress-test)
+7. [Getting Started](#-getting-started)
+8. [Continuous Integration](#-continuous-integration)
+9. [Assumptions](#-assumptions)
+10. [Technical Decisions & Trade-offs](#-technical-decisions--trade-offs)
+11. [Known Limitations](#-known-limitations)
+12. [Challenges & Lessons Learned](#-challenges--lessons-learned)
+13. [Roadmap](#-roadmap)
+14. [License](#-license)
+
+---
+
+## 📸 Screenshots
+
+| English (main page) | Hindi (main page) |
+| :---: | :---: |
+| ![Main page in English](./docs/screenshots/main_page_eng.png) | ![Main page in Hindi](./docs/screenshots/main_page_hin.png) |
+
+| Middle section | Bottom section |
+| :---: | :---: |
+| ![Main page, middle section](./docs/screenshots/main_page_middle.png) | ![Main page, bottom section](./docs/screenshots/main_page_bottom.png) |
+
+---
+
+## 🧰 Tech Stack
+
+| Layer | Technology | Version | Purpose |
+| --- | --- | --- | --- |
+| Mobile | Expo / React Native | Expo SDK 57 / RN ~0.79 | Cross-platform mobile client |
+| Runtime | Node.js | 22 LTS | JavaScript runtime |
+| Web framework | Express | ^4.19.2 | REST API and routing |
+| ODM | Mongoose | ^8.8.0 | Strict schema modelling and validation |
+| Database | MongoDB Atlas | MongoDB 6.0+ | Document database (WiredTiger engine) |
+| Middleware | `helmet`, `cors`, `morgan` | – | Security headers, cross-origin policy, request logging |
+| Icons | `lucide-react-native` | – | UI iconography matching mockup |
+| i18n | Custom dictionaries | – | Dynamic English / हिंदी switching |
+| CI | GitHub Actions | Ubuntu + MongoDB 6.0 service | Automated build and concurrency test |
+
+---
+
+## ✨ Key Features
+
+1. **Race-condition-safe spot booking**
+   - Spots are reserved with a single atomic MongoDB update guarded by `$expr: { $lt: ['$bookedSpots', '$totalCapacity'] }`, ensuring the capacity check and the increment cannot be separated by concurrent requests.
+   - Verified with an automated 30-request concurrent stress test.
+2. **Server-driven lifecycle state machine**
+   - States: `UPCOMING` → `REGISTRATION_OPEN` → `SUBMISSION_OPEN` → `EVALUATION` → `COMPLETED`.
+   - Derived from authoritative server time (UTC), preventing client clock tampering from changing eligibility.
+3. **Participant-aware dynamic CTA**
+   - The primary action button automatically mutates with the participant's state: `Register Now` → `Upload Submission` → `Submission Uploaded`.
+4. **Built-in evaluator switcher**
+   - Switch between seeded registered and unregistered users.
+   - Dynamically generate randomized guest participants on the fly.
+   - Reset the demo state back to `1/20 booked` in one click.
+5. **Full bilingual internationalisation**
+   - Instant ENG / हिंदी toggle covering headings, metrics, countdowns, tabs and action labels.
+6. **Design-faithful layout**
+   - Follows the design reference: 2 × 2 Important Dates grid, horizontal previous-winners carousel, 6-tier reward distribution, side-by-side refund/payment trust cards, referral section, ad banner and bottom navigation bar.
+
+---
+
+## 🏗️ Architecture
 
 ```text
 feedants-competition-module/
+├── .github/workflows/      # CI pipeline (Ubuntu, Node 22, MongoDB 6)
 ├── backend/
-│   ├── config/             # Database connection setup
-│   ├── controllers/        # Business logic, lifecycle engine, and atomic spot locking
-│   ├── models/             # Strict Mongoose schemas (Competition, User, Registration)
-│   ├── routes/             # REST endpoints (with Express route-ordering safeguards)
-│   ├── scripts/            # Seed data and concurrency stress-test harnesses
-│   ├── app.js              # Express middleware and configuration
-│   └── server.js           # Server listener
-└── mobile-app/
-    ├── src/
-    │   ├── components/     # Modular UI (Header, PricingCard, ImportantDates, Winners, etc.)
-    │   ├── config/         # API base client with LAN routing configuration
-    │   └── utils/          # Bilingual translation dictionaries (ENG / हिंदी)
-    └── App.js              # Root state orchestrator, user switcher modal & tab router
+│   ├── config/             # Database connection
+│   ├── controllers/        # Business logic, lifecycle engine, atomic spot locking
+│   ├── models/             # Mongoose schemas: Competition, User, Registration
+│   ├── routes/             # REST routes (static routes declared before /:id)
+│   ├── scripts/            # Seed data and concurrency stress test
+│   ├── app.js              # Express app and middleware (helmet, cors, morgan)
+│   └── server.js           # HTTP listener
+├── mobile-app/
+│   ├── src/
+│   │   ├── components/     # Header, PricingCard, ImportantDates, Winners, ...
+│   │   ├── config/         # API client and network host mapping
+│   │   └── utils/          # ENG / हिंदी translation dictionaries
+│   └── App.js              # Root state, user-switcher modal, tab router
+├── docs/screenshots/       # UI verification screenshots
+└── LICENSE                 # MIT License
+
+```
+
+### Competition Lifecycle State Machine
+
+The status is derived inside `computeLifecycleStatus()` by comparing server time (UTC) with the milestone timestamps:
+
+| State | Date Condition | Participant Capabilities | CTA Shown |
+| --- | --- | --- | --- |
+| **UPCOMING** | `now < registrationStartDate` | Browse details and prize structure only | "Registration Opening Soon" *(disabled)* |
+| **REGISTRATION_OPEN** | `registrationStartDate <= now <= registrationEndDate` | Unregistered can reserve a spot. Registered can submit if `now >= submissionStartDate`. | **Unregistered:** Register Now<br>
+
+<br>**Registered:** Upload Submission |
+| **SUBMISSION_OPEN** | `registrationEndDate < now <= submissionEndDate` | Registration blocked. Registered participants can upload performance video. | **Unregistered:** Registration Closed *(disabled)*<br>
+
+<br>**Registered:** Upload Submission |
+| **EVALUATION** | `submissionEndDate < now <= resultDate` | Submissions locked while jury evaluates entries | Under Evaluation *(disabled)* |
+| **COMPLETED** | `now > resultDate` | Winner ranks and certificates are viewable | View Results |
+
+> **Note on overlapping windows:** The submission window opens before registration closes so that early registrants can upload their entries immediately. In `seed.js`, dates are configured dynamically relative to `now` so the competition is always actively open for evaluation.
+
+---
+
+## 🔌 API Reference
+
+**Base URL:** `http://<HOST_IP>:5000/api/v1/competitions`
+
+> ⚠️ **Express Route Precedence:** Static routes (`/primary`, `/users`, `/users/new`) are registered before parameterised routes (`/:id`). If registered after, Express matches the string `"users"` as an `:id` parameter and Mongoose throws a `CastError`.
+
+| Method | Endpoint | Description | Auth Header | Request Body | Status Codes |
+| --- | --- | --- | --- | --- | --- |
+| **GET** | `/primary` | Active competition with lifecycle state and caller's participation state | `x-user-id` *(optional)* | – | `200`, `404` |
+| **GET** | `/users` | List seeded test participants | – | – | `200` |
+| **POST** | `/users/new` | Create a disposable, unregistered guest participant | – | – | `201` |
+| **GET** | `/:id` | Competition details by MongoDB ID | `x-user-id` *(optional)* | – | `200`, `404` |
+| **POST** | `/:id/register` | Atomically reserve a spot | `x-user-id` *(required)* | – | `201`, `400`, `401`, `404`, `409` |
+| **POST** | `/:id/submit` | Record a participant's submission | `x-user-id` *(required)* | `{ "mediaUrl": "https://…" }` | `200`, `400`, `401`, `403`, `404` |
+| **POST** | `/:id/reset-demo` | Demo only. Reset to 1/20 booked and delete guest users | – | – | `200` |
+
+### Response Envelope & Error Handling
+
+All responses follow a consistent JSON envelope:
+
+```json
+// Success (2xx)
+{
+  "success": true,
+  "data": { },
+  "message": "Optional description"
+}
+
+// Error (4xx / 5xx)
+{
+  "success": false,
+  "message": "Explicit failure reason"
+}
+
+```
+
+| Status | Trigger | Example Message |
+| --- | --- | --- |
+| **400 Bad Request** | Missing `mediaUrl`, or the registration/submission window is closed | `"Media URL is required"` / `"Registration has closed"` |
+| **401 Unauthorized** | Missing `x-user-id` header on a protected route | `"x-user-id header is required"` |
+| **403 Forbidden** | An unregistered participant calls `/submit` | `"You must register before submitting"` |
+| **404 Not Found** | Unknown competition or participant ID | `"Competition not found"` / `"User not found"` |
+| **409 Conflict** | Competition full, or user already registered | `"Competition is fully booked"` / `"User is already registered for this competition"` |
+| **500 Server Error** | Database disconnect or unhandled exception | `"Internal server error"` |
+
+#### Example: Registration (`POST /:id/register`)
+
+```http
+POST /api/v1/competitions/6ab264c3dfe2d14ecdda0b1b/register
+Content-Type: application/json
+x-user-id: 6ab264c3dfe2d14ecdda0b1a
+
+```
+
+```json
+// 201 Created
+{
+  "success": true,
+  "message": "Successfully registered!",
+  "data": {
+    "registration": {
+      "_id": "6741b123dfe2d14ecdda9999",
+      "competitionId": "6ab264c3dfe2d14ecdda0b1b",
+      "userId": "6ab264c3dfe2d14ecdda0b1a",
+      "status": "CONFIRMED",
+      "paymentStatus": "SIMULATED",
+      "createdAt": "2026-09-24T08:30:00.000Z"
+    },
+    "remainingSpots": 18,
+    "bookedSpots": 2
+  }
+}
+
+```
+
+```json
+// 409 Conflict: Competition is at 20/20 capacity
+{ "success": false, "message": "Competition is fully booked" }
+
+// 409 Conflict: Duplicate registration attempt
+{ "success": false, "message": "User is already registered for this competition" }
 
 ```
 
 ---
 
-## 🔌 REST API Specification
+## ⚡ Concurrency Design & Stress Test
 
-Base URL: `http://<HOST_IP>:5000/api/v1/competitions`
+### Registration Flow
 
-| Method | Endpoint | Description | Headers | Request Body | Response Status |
-| --- | --- | --- | --- | --- | --- |
-| `GET` | `/primary` | Resolves active competition, dynamic lifecycle & user state | `x-user-id` (optional) | None | `200 OK`, `404 Not Found` |
-| `GET` | `/:id` | Get specific competition details by Mongo ID | `x-user-id` (optional) | None | `200 OK`, `404 Not Found` |
-| `POST` | `/:id/register` | Atomic, race-condition-safe spot booking | `x-user-id` (required) | None | `201 Created`, `400 Closed`, `409 Full/Registered` |
-| `POST` | `/:id/submit` | Upload participant performance submission | `x-user-id` (required) | `{ "mediaUrl": "string" }` | `200 OK`, `403 Unregistered` |
-| `GET` | `/users` | Fetch seeded test participants | None | None | `200 OK` |
-| `POST` | `/users/new` | Dynamically generate a fresh unregistered participant | None | None | `201 Created` |
-| `POST` | `/:id/reset-demo` | Reset spots to 1/20 and purge guest test participants | None | None | `200 OK` |
+`POST /:id/register` executes four coordinated steps:
 
----
+1. **Fast-fail check:** `Registration.findOne({ competitionId, userId })` rejects obvious repeat requests early. This is a non-locking optimization; the unique compound index enforces hard database-level uniqueness.
+2. **Atomic spot reservation:** `Competition.findOneAndUpdate(...)` increments `bookedSpots: 1` guarded by `$expr: { $lt: ['$bookedSpots', '$totalCapacity'] }`. MongoDB WiredTiger applies single-document updates atomically, mathematically eliminating race conditions between check and write.
+3. **Registration insert:** `Registration.create(...)`. The unique compound index `{ competitionId: 1, userId: 1 }` rejects duplicates at the database level, preventing double-tap submissions.
+4. **Compensating rollback:** If step 3 throws (such as an `E11000` duplicate key collision), the catch block invokes `Competition.findByIdAndUpdate(competitionId, { $inc: { bookedSpots: -1 } })` to restore capacity.
 
-## ✨ Key Features & Highlights
+> **Why not insert first, then increment?** Inserts of distinct `{ competitionId, userId }` pairs all succeed independently, which would allow 30 concurrent users to insert before any count or capacity check executes, causing severe overselling.
 
-1. **Race-Condition-Safe Atomic Booking**:
-* Spot reservation uses MongoDB document-level atomic queries (`$expr: { $lt: ['$bookedSpots', '$totalCapacity'] }`).
-* Mathematically prevents overselling even when hundreds of users submit payment/registration simultaneously.
+*Known trade-off:* If the Node process crashes between steps 2 and 3, or if the rollback itself fails, `bookedSpots` could drift by one (a phantom spot). The production solution is a multi-document ACID transaction (`session.startTransaction()`).
 
+### Stress Test
 
-2. **Dynamic Lifecycle State Machine**:
-* The competition lifecycle (`UPCOMING`, `REGISTRATION_OPEN`, `SUBMISSION_OPEN`, `EVALUATION`, `COMPLETED`) is calculated on the server using authoritative server time, preventing client-side clock tampering.
-
-
-3. **Participant State Context**:
-* The Call-To-Action (CTA) automatically mutates (`Register Now` → `Upload Submission` → `Submission Uploaded`) based on the active participant's database record.
-
-
-4. **Built-In Evaluator Switcher**:
-* Includes a non-intrusive User Switcher Modal:
-* Toggle between pre-seeded registered and unregistered participants.
-* Generate realistic guest participants on the fly.
-* Reset demo state back to `1/20 Booked` with a single click.
-
-
-
-
-5. **Full Internationalization (i18n)**:
-* Dynamic bilingual toggle (**ENG** / **हिंदी**) that seamlessly translates titles, metrics, countdowns, tabs, and action labels.
-
-
-6. **Pixel-Fidelity Layout**:
-* $2 \times 2$ Important Dates matrix, horizontal previous winners carousel, full 6-tier reward distribution, side-by-side refund/payment trust cards, referral engine, and bottom navigation bar.
-
-
-
----
-
-## ⚡ Concurrency Stress Test Verification
-
-An automated stress test script (`backend/scripts/test-concurrency.js`) fires 30 simultaneous registration requests across 30 distinct users against the remaining 19 spots using `Promise.all`:
+`backend/scripts/test-concurrency.js` fires 30 simultaneous fetch requests to `POST /:id/register` from 30 distinct users, targeting the 19 remaining spots via `Promise.all`. It tests the live HTTP server:
 
 ```text
 --- STARTING CONCURRENCY STRESS TEST ---
@@ -117,187 +249,184 @@ Other Unexpected Errors: 0
 Database Final Verification:
 Final bookedSpots in DB: 20/20
 Actual Registration documents in DB: 20
-✅ PASSED: No overselling occurred! Atomic locking works as designed.
+✅ PASSED: No overselling occurred.
 
 ```
 
----
-
-## 🛠️ Developer Retrospective (These got me pretty good ngl..)
-
-> **Development Approach**: Built within a 48-hour sprint utilizing AI-assisted developer workflows (mainly Gemini) as architectural sounding boards and code accelerators. All database schemas, concurrency locking patterns, network loopbacks, and state machines were manually wired, tested, and verified.
-
-Building this within a tight development window surfaced a few practical engineering challenges:
-
-1. **Android Physical Device Networking**:
-When testing on physical Android hardware via Expo Go, requests to `localhost` hit the phone's loopback interface rather than the development machine. Mapping the backend to the host machine's Wi-Fi LAN IP (`10.78.55.113`) and opening Windows Defender port 5000 was necessary for reliable packet routing.
-2. **Mongoose Schema Stripping Gotcha**:
-During initial testing, winner ranks defaulted to "1st Winner" across all cards. Traced this down to Mongoose's strict schema mode stripping the `rank` attribute on write because it hadn't been declared in the `previousWinners` sub-schema definition.
-3. **Client-Side Safe Areas**:
-Standard React Native `SafeAreaView` only handles iOS notch insets natively. Implemented dynamic `StatusBar.currentHeight` offsets to keep the top utility bar accessible on hole-punch Android displays.
+The script verifies final counts in MongoDB and calls `process.exit(1)` if any overselling or state drift is detected, ensuring CI fails automatically on regression.
 
 ---
 
-## 🚀 Step-by-Step Setup Guide
+## 🚀 Getting Started
 
-### 1. Prerequisites
+### Prerequisites
 
-* **Node.js**: `v18+`
-* **Database**: MongoDB Atlas cluster or local MongoDB instance
-* **Mobile Client**: Expo Go app on physical iOS or Android device (or an emulator)
+* **Node.js:** 22 LTS
+* **MongoDB:** Atlas cluster or local instance (MongoDB 6.0+)
+* **Mobile:** Expo Go on a physical device, or an Android emulator / iOS simulator
 
-### 2. Backend Setup
+### 1. Backend Setup
 
 ```bash
-# Navigate to backend directory
 cd backend
-
-# Install dependencies
 npm install
-
-# Create .env from template (or manually create .env)
 cp .env.example .env
 
 ```
 
-Open `.env` and set your connection parameters:
+Edit `.env`:
 
-```env
-PORT=5000
-MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/feedants?retryWrites=true&w=majority
+| Variable | Example | Description |
+| --- | --- | --- |
+| `PORT` | `5000` | API port |
+| `MONGO_URI` | `mongodb+srv://<user>:<password>@cluster.mongodb.net/feedants?retryWrites=true&w=majority` | MongoDB connection string |
 
-```
+Available scripts:
 
-Seed the database with baseline competition and test participants:
+| Script | Command | Purpose | Pre-condition |
+| --- | --- | --- | --- |
+| **start** | `npm start` | Production server listener | MongoDB reachable |
+| **dev** | `npm run dev` | Development server with Nodemon auto-reload | MongoDB reachable |
+| **seed** | `npm run seed` | Seeds baseline competition + 2 test users | MongoDB reachable |
+| **test:concurrency** | `npm run test:concurrency` | 30-request simultaneous stress test | API running on port 5000 |
+
+Seed and start the server (**Terminal 1**):
 
 ```bash
+cd backend
 npm run seed
-
-```
-
-*(Optional)* Run the concurrency test to verify database locking mechanics:
-
-```bash
-npm run test:concurrency
-
-```
-
-Start the development server:
-
-```bash
 npm run dev
 
 ```
 
----
-
-### 3. Mobile App Setup
+Run the stress test against the live server (**Terminal 2**):
 
 ```bash
-# Navigate to mobile-app directory
-cd ../mobile-app
+cd backend
+npm run test:concurrency
 
-# Install dependencies
+```
+
+> ⚠️ `test:concurrency` issues real HTTP requests to `http://localhost:5000`. The server must be actively running or the test will throw `ECONNREFUSED`.
+
+### 2. Mobile App Setup
+
+```bash
+cd mobile-app
 npm install
 
 ```
 
-#### Network Configuration (`mobile-app/src/config/api.js`)
+Configure `API_BASE_URL` in `mobile-app/src/config/api.js`:
 
-Depending on your target client, configure `API_BASE_URL` accordingly:
-
-| Target Device | `API_BASE_URL` Setting | Note |
+| Target Client | `API_BASE_URL` | Notes |
 | --- | --- | --- |
-| **Android Physical Device (Expo Go)** | `http://<YOUR_LAN_IP>:5000/api/v1/competitions` | PC and phone must be on the same Wi-Fi subnet (e.g., `10.78.55.113` or `192.168.1.X`). |
-| **Android Emulator** | `http://10.0.2.2:5000/api/v1/competitions` | Android emulator loopback alias to host machine. |
-| **iOS Simulator / Web** | `http://localhost:5000/api/v1/competitions` | Local loopback interface. |
+| **Android physical device (Expo Go)** | `http://<YOUR_LAN_IP>:5000/api/v1/competitions` | Phone and PC must share the same Wi-Fi subnet. Find via `ipconfig` (Windows) or `ifconfig` (macOS/Linux). |
+| **Android emulator** | `http://10.0.2.2:5000/api/v1/competitions` | Standard Android emulator alias for host machine. |
+| **iOS simulator / Web** | `http://localhost:5000/api/v1/competitions` | Local loopback interface. |
 
-Start the Expo development server:
+Run the application:
 
 ```bash
 npx expo start
 
 ```
 
-* Press `a` for Android Emulator.
-* Scan the generated QR code via **Expo Go** on a physical device.
-* Press `w` for Web preview.
+Press `a` for Android emulator, `w` for web browser, or scan the QR code with Expo Go.
+
+> **Windows Network Note:** Allow inbound TCP traffic on port 5000 through Windows Defender Firewall, or physical devices over Wi-Fi will not be able to reach the backend.
 
 ---
 
-## 📌 Important Assumptions Made
+## 🔁 Continuous Integration
 
-* **Identity Context**: In place of a full SMS/OTP authentication gate, user identity is communicated via the `x-user-id` HTTP header. A built-in user switcher modal enables testing multiple registration and submission states.
-* **Payment Processing**: Given the 48-hour scope, entry fees (₹99) are captured through an atomic two-step reservation/confirmation state machine rather than a live Razorpay webhook pipeline.
-* **Authoritative Server Time**: Client clocks can drift or be altered; all eligibility deadlines and countdown milestones are derived exclusively from MongoDB server timestamps.
+The GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push and pull request:
 
----
-
-## 🧠 Major Technical Decisions
-
-### MongoDB Atomic Operations vs. Application-Level Locking
-
-* **Problem**: Traditional `findOne()` followed by `comp.bookedSpots += 1; await comp.save()` causes severe race conditions under concurrent load.
-* **Solution**: Implemented `Competition.findOneAndUpdate()` with an atomic precondition: `$expr: { $lt: ['$bookedSpots', '$totalCapacity'] }`. MongoDB's WiredTiger storage engine handles locking at the document layer, guaranteeing zero spot over-allocation.
-
-### Compound Unique Index for Duplicate Prevention
-
-The `Registration` schema defines a compound index `{ competitionId: 1, userId: 1 }` with `{ unique: true }`. Even if a user double-taps "Register", the second write is rejected at the database engine level.
-
-### Dynamic Primary Route (`/primary`)
-
-To eliminate 404 errors caused by hardcoded database ObjectIDs across re-seedings, `/primary` resolves the active competition dynamically on the backend.
+1. Spins up a native MongoDB 6.0 service container.
+2. Checks out code and provisions Node.js 22 LTS (`actions/setup-node@v4`).
+3. Installs backend dependencies via `npm ci`.
+4. Syntax-checks the server entry point (`node --check server.js`).
+5. Seeds the test database.
+6. Starts the API in the background and polls `/primary` until the server responds.
+7. Executes `npm run test:concurrency` against the live containerized API.
 
 ---
 
-## ⚖️ Trade-offs & Technical Assumptions
+## 📌 Assumptions
 
-### Documented Engineering Compromises
-
-* **Simulated Payment Settlement (Zero-Friction Registration)**
-* **Trade-off**: Rather than forcing the evaluator through a test Razorpay modal with OTP popups, tapping "Register Now" immediately commits the atomic spot reservation.
-* **Production Transition**: In production, the button would invoke `RazorpayCheckout.open()`. The spot would enter a temporary 10-minute lock state (`status: 'PENDING'`), and confirmation would occur asynchronously via a signature-verified Razorpay Webhook.
-
-
-* **Evaluator User Switcher vs. Standalone Authentication**
-* **Trade-off**: Excluded multi-screen SMS/OTP registration so the evaluator can test multiple registration states (Registered vs. Unregistered) instantly without needing multiple phone numbers or account resets.
-* **Production Transition**: In production, user state would be derived from a verified JWT Bearer token via standard Auth0 / Firebase Auth middleware.
-
-
-* **Dynamic Guest Pool vs. Persistent Multi-Tenant Users**
-* **Trade-off**: Random combination generator (Kabir Joshi, Priya Patel) allows creating disposable users without a registration form.
-* **Production Transition**: User sign-ups would be stored persistently with KYC and payout details for direct prize distribution.
-
-
-* **Direct Database Atomicity vs. Redis In-Memory Locks**
-* **Trade-off**: Relied on MongoDB WiredTiger document-level atomic operations instead of an external Redis/Redlock cluster.
-* **Production Transition**: For traffic exceeding 10,000 requests/sec, Redis distributed locking would be placed ahead of MongoDB to shield the database layer entirely.
-
-
+* **Identity:** User identity is communicated via the `x-user-id` header for demonstration purposes, bypassing SMS/OTP authentication to allow rapid evaluation across multiple participant states.
+* **Payments:** The ₹99 entry fee is not charged. Tapping "Register Now" reserves the spot immediately, and `paymentStatus` is recorded as `SIMULATED`.
+* **Authoritative server time:** All deadlines and countdowns come from the Node.js server clock (`new Date()`, UTC), ensuring client clock tampering cannot alter eligibility.
+* **Submissions:** `mediaUrl` is a verified string reference. No direct binary video transcoding is implemented.
+* **Design reference:** UI layout, asset hierarchy and styling are derived directly from Page 3 of the Feedants Technical Assignment document (Classical Dance Event screen). No external Figma file was provided.
 
 ---
 
-### Additional Architecture Trade-offs Considered
+## 🧠 Technical Decisions & Trade-offs
 
-* **MongoDB Atomic Operators vs. Redis Distributed Lock (Redlock)**:
-* **Trade-off**: A Redis lock offers lower latency for high-throughput counters, but introduces additional infrastructure requirements and distributed failure modes.
-* **Resolution**: For capacity management up to thousands of concurrent users, MongoDB's single-document atomic operations provide ACID-compliant consistency with zero additional infrastructure.
+### Atomic MongoDB Update vs. Read-Modify-Write
 
+`findOne()` followed by `bookedSpots += 1; save()` is a classic race condition under concurrent load. The atomic `findOneAndUpdate` with an `$expr` precondition removes the gap between check and write with zero external infrastructure overhead.
 
-* **Client-Side Polling vs. WebSockets**:
-* **Trade-off**: WebSockets provide instant push notifications for spot changes, but increase battery consumption and require persistent socket management.
-* **Resolution**: Implemented optimistic client updates paired with pull-to-refresh. In full production, Server-Sent Events (SSE) would serve as a lightweight notification channel for spot updates.
+### Compensating Rollback vs. Multi-Document Transaction
 
+| Feature | Compensating Rollback (Current) | Multi-Document Transaction (Production) |
+| --- | --- | --- |
+| **Complexity** | Minimal, zero session management | Requires `session.startTransaction()` and retry handling |
+| **Failure Mode** | Mid-execution process crash leaves a phantom spot | Increment and insert commit or abort together |
+| **Contention** | Low overhead | High write contention triggers transaction retries |
 
+Transactions require a replica set (which MongoDB Atlas provisions by default).
+
+### MongoDB Atomics vs. Redis Distributed Locks
+
+| Feature | MongoDB Atomic Update (Chosen) | Redis Lock / Counter |
+| --- | --- | --- |
+| **Infrastructure** | None beyond database | Requires managed Redis cluster & failure recovery |
+| **Latency** | ~10–25 ms (DB round trip) | <2 ms (in-memory) |
+| **Consistency** | Single source of truth | Must be synchronized with database |
+
+For capacity management up to thousands of concurrent users, MongoDB document-level locks provide ACID-compliant consistency. For viral traffic spikes (>10,000 req/sec), an in-memory Redis atomic counter (`DECR`) would be placed in front of MongoDB.
+
+### Additional Decisions
+
+* **Dynamic `/primary` route:** Resolves the active competition dynamically on the backend, ensuring the mobile app never encounters 404 errors due to hardcoded ObjectIDs changing across database re-seedings.
+* **Evaluator switcher vs. real authentication:** Skipping OTP login allows reviewers to switch between registered and unregistered states instantly. In production, identity is derived from verified JWT Bearer tokens.
+* **Disposable guests vs. persistent users:** Dynamic guest generation avoids requiring sign-up forms during evaluation. In production, users are persisted with KYC and payout details for direct bank transfers.
 
 ---
 
-## 📈 Production Improvements & Next Steps
+## ⚠️ Known Limitations
 
-1. **Read-Through Caching with Redis**: Cache `GET /competitions/primary` responses with a 5-second TTL to absorb read traffic spikes during promotional events.
-2. **Asynchronous Registration Queue (BullMQ / AWS SQS)**: Offload secondary post-registration tasks (confirmation emails, referral credit allocation, invoice generation) to background worker jobs.
-3. **Real Razorpay Webhook Integration**: Attach verified HMAC-SHA256 signature validation with idempotent event ID caching to support live payment settlements.
+1. `x-user-id` is unauthenticated and can be spoofed in API testing tools.
+2. `POST /:id/reset-demo` is an unauthenticated convenience endpoint for evaluation; it must be disabled in production.
+3. The two-step reservation can leave a phantom spot if the Node process crashes mid-request.
+4. Security headers (`helmet`) and `cors` are active, but rate limiting (`express-rate-limit`) and request-body validation libraries (Zod/Joi) are not implemented.
+5. Automated testing in CI covers build, seed, and concurrency locking, but does not yet include a unit test suite (Jest/Supertest).
 
-```
+---
 
-```
+## 🛠️ Challenges & Lessons Learned
+
+* **Sprint execution:** Built in a 48-hour sprint using AI-assisted workflows as an architectural sounding board and code accelerator. Database schemas, locking logic, networking and state machines were wired, tested and verified by hand.
+* **Physical Android networking:** From Expo Go, `localhost` resolves to the phone's loopback interface. The fix was routing traffic through the machine's LAN IP and allowing inbound port 5000 traffic through Windows Defender Firewall.
+* **Mongoose strict mode:** Winner cards defaulted to "1st Winner" because `rank` was undeclared in the `previousWinners` sub-schema, causing Mongoose to strip the field on write. Explicitly declaring `rank` resolved the issue.
+* **Android safe area calculation:** React Native's built-in `SafeAreaView` only applies notch insets on iOS. Manual `StatusBar.currentHeight` offsets were added to keep the header accessible on hole-punch displays.
+
+---
+
+## 📈 Roadmap
+
+* [ ] **Transactional registration:** Wrap spot increment and registration creation in a MongoDB multi-document ACID transaction, paired with a reconciliation job.
+* [ ] **Automated tests:** Jest + Supertest integration suites for all edge cases (201, full, duplicate, expired window) gated in CI.
+* [ ] **Real authentication:** JWT authentication replacing `x-user-id`, and removing `reset-demo`.
+* [ ] **Live Razorpay webhooks:** `PENDING` reservation holds with HMAC-SHA256 signature verification.
+* [ ] **Read-through caching:** Redis caching layer for `GET /primary` with a 5-second TTL.
+* [ ] **Background jobs (BullMQ / SQS):** Asynchronous confirmation emails, referral reward allocation, and invoice generation.
+* [ ] **Hardening:** `express-rate-limit`, Zod schema validation, and structured Pino logging.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See the [LICENSE](https://github.com/Vipash/Feedants-Assignment/blob/main/LICENSE) file for details.

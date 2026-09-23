@@ -20,8 +20,8 @@ const registrationSchema = new mongoose.Schema({
   },
   paymentStatus: {
     type: String,
-    enum: ['PENDING', 'COMPLETED', 'FAILED'],
-    default: 'COMPLETED'
+    enum: ['PENDING', 'COMPLETED', 'SIMULATED', 'FAILED'],
+    default: 'SIMULATED'
   },
   submission: {
     mediaUrl: { type: String },

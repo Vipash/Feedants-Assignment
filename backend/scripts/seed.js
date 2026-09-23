@@ -46,8 +46,9 @@ async function seed() {
       avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300', // Authentic formal portrait
       mediaUrl: 'https://www.youtube.com/watch?v=5CvwgC-WQlo'
     },
+    // Registration closes in ~1.25 days so countdown timer and registration are actively open
     registrationStartDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
-    registrationEndDate: new Date(now.getTime() + 1.25 * 24 * 60 * 60 * 1000), // ~1d 6h
+    registrationEndDate: new Date(now.getTime() + 1.25 * 24 * 60 * 60 * 1000), 
     submissionStartDate: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000),
     submissionEndDate: new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000),
     resultDate: new Date(now.getTime() + 22 * 24 * 60 * 60 * 1000),

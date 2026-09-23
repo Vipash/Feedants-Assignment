@@ -59,7 +59,6 @@ async function runConcurrencyTest() {
   const results = await Promise.all(
     testUsers.map(async (user) => {
       try {
-        // Adjust endpoint path if your server expects /api/v1/competitions/:id/register
         const res = await fetch(`${BASE_URL}/${comp._id}/register`, {
           method: 'POST',
           headers: {
@@ -99,7 +98,7 @@ async function runConcurrencyTest() {
     console.log('Sample unexpected response:', otherErrors[0]);
   }
 
-  // DB Verification
+  // Fetch updated competition state and total registration records from DB
   const freshComp = await Competition.findById(comp._id);
   const actualRegistrations = await Registration.countDocuments({ competitionId: comp._id });
 
@@ -107,15 +106,22 @@ async function runConcurrencyTest() {
   console.log(`Final bookedSpots in DB: ${freshComp.bookedSpots}/${freshComp.totalCapacity}`);
   console.log(`Actual Registration documents in DB: ${actualRegistrations}`);
 
+  const testUserIds = testUsers.map((u) => u._id);
+
+  // Validate atomic locking integrity
   if (freshComp.bookedSpots <= freshComp.totalCapacity && freshComp.bookedSpots === actualRegistrations) {
     console.log('✅ PASSED: No overselling occurred! Atomic locking works as designed.');
   } else {
     console.error('❌ FAILED: Overselling or state drift detected!');
+    // Cleanup before exiting on failure so test data isn't left in DB
+    await Registration.deleteMany({ userId: { $in: testUserIds } });
+    await User.deleteMany({ _id: { $in: testUserIds } });
+    await Competition.findByIdAndUpdate(comp._id, { bookedSpots: initialBooked });
+    await mongoose.disconnect();
+    process.exit(1);
   }
 
-  // Cleanup test users and test registrations
   console.log('\nCleaning up stress test data...');
-  const testUserIds = testUsers.map((u) => u._id);
   await Registration.deleteMany({ userId: { $in: testUserIds } });
   await User.deleteMany({ _id: { $in: testUserIds } });
   

@@ -1,4 +1,4 @@
-name: Backend CI & Concurrency Verification
+name: CI Pipeline
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  backend-concurrency:
     runs-on: ubuntu-latest
 
     services:
@@ -17,28 +17,43 @@ jobs:
           - 27017:27017
 
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Setup Node.js 22 LTS
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
 
-      - name: Install Backend Dependencies
+      - name: Install Dependencies
         run: |
           cd backend
-          npm install
+          npm ci
 
-      - name: Verify Seed & Concurrency Locking
+      - name: Syntax Check Server Entry Point
+        run: |
+          cd backend
+          node --check server.js
+
+      - name: Seed Database & Execute Concurrency Stress Test
         env:
           PORT: 5000
-          MONGO_URI: mongodb://localhost:27017/feedants_test
+          MONGO_URI: mongodb://localhost:27017/feedants_ci
         run: |
           cd backend
           npm run seed
-          npm start &
-          sleep 3
+          npm run dev &
+          
+          # Healthcheck polling loop: wait up to 15s for the server to be ready
+          echo "Waiting for API to respond on http://localhost:5000/api/v1/competitions/primary..."
+          for i in {1..15}; do
+            if curl -s http://localhost:5000/api/v1/competitions/primary > /dev/null; then
+              echo "Server is ready!"
+              break
+            fi
+            sleep 1
+          done
+
           npm run test:concurrency
