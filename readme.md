@@ -1,10 +1,3 @@
-Here is the cleaned-up, properly formatted, and fully polished `README.md` file. All markdown formatting issues, unescaped code blocks, raw HTML fragments, and broken headings have been fixed.
-
----
-
-### Cleaned & Formatted `README.md`
-
-```markdown
 # Feedants — Competition Details Screen (Full-Stack Module)
 
 [![CI Pipeline](https://github.com/Vipash/Feedants-Assignment/actions/workflows/ci.yml/badge.svg)](https://github.com/Vipash/Feedants-Assignment/actions/workflows/ci.yml)
