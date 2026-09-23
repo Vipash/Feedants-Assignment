@@ -1,3 +1,4 @@
+// mobile-app/backend/scripts/test-concurrency.js
 if (!globalThis.crypto) {
   globalThis.crypto = require('crypto').webcrypto;
 }
@@ -8,63 +9,95 @@ const User = require('../models/User');
 const Competition = require('../models/Competition');
 const Registration = require('../models/Registration');
 
-const BASE_URL = 'http://localhost:5000/api/v1/competitions';
+// Base API URL
+const BASE_URL = process.env.API_BASE_URL || 'http://localhost:5000/api/v1/competitions';
 
 async function runConcurrencyTest() {
-  await mongoose.connect(process.env.MONGO_URI);
+  const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/feedants_db';
+
+  try {
+    await mongoose.connect(mongoUri);
+    console.log('MongoDB Connected to:', mongoUri);
+  } catch (err) {
+    console.error('❌ Database Connection Error:', err.message);
+    process.exit(1);
+  }
+
   console.log('--- STARTING CONCURRENCY STRESS TEST ---');
 
+  // Fetch latest created competition dynamically
   const comp = await Competition.findOne().sort({ createdAt: -1 });
+
   if (!comp) {
-    console.error('Seed competition not found. Run "npm run seed" first.');
+    console.error('❌ Seed competition not found in database. Run "npm run seed" first.');
+    await mongoose.disconnect();
     process.exit(1);
   }
 
   console.log(`Targeting Competition: "${comp.title}" (ID: ${comp._id})`);
 
-  const remaining = comp.totalCapacity - comp.bookedSpots;
-  console.log(`Current spots remaining: ${remaining} (Total: ${comp.totalCapacity}, Booked: ${comp.bookedSpots})`);
+  const initialBooked = comp.bookedSpots;
+  const remaining = comp.totalCapacity - initialBooked;
+  console.log(`Current spots remaining: ${remaining} (Total: ${comp.totalCapacity}, Booked: ${initialBooked})`);
 
-  // Create 30 temporary test users
-  const testUsers = [];
+  // Create 30 temporary test users in bulk for speed
+  const userDocs = [];
   for (let i = 1; i <= 30; i++) {
-    const email = `stress_tester_${Date.now()}_${i}@test.com`;
-    const user = await User.create({
-      name: `Tester ${i}`,
-      email,
+    userDocs.push({
+      name: `Stress Tester ${i}`,
+      email: `stress_tester_${Date.now()}_${i}_${Math.random().toString(36).substring(7)}@test.com`,
       referralCode: `STRESS${i}_${Math.floor(Math.random() * 10000)}`
     });
-    testUsers.push(user);
   }
+
+  const testUsers = await User.insertMany(userDocs);
   console.log(`Created ${testUsers.length} simulated concurrent users.`);
 
   console.log(`Firing ${testUsers.length} simultaneous registration requests...`);
 
   // Fire requests simultaneously using fetch
   const results = await Promise.all(
-    testUsers.map(user =>
-      fetch(`${BASE_URL}/${comp._id}/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': user._id.toString()
-        }
-      }).then(async res => ({
-        status: res.status,
-        body: await res.json(),
-        userId: user._id
-      }))
-    )
+    testUsers.map(async (user) => {
+      try {
+        // Adjust endpoint path if your server expects /api/v1/competitions/:id/register
+        const res = await fetch(`${BASE_URL}/${comp._id}/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': user._id.toString()
+          },
+          body: JSON.stringify({ competitionId: comp._id.toString() })
+        });
+
+        const body = await res.json().catch(() => ({}));
+
+        return {
+          status: res.status,
+          body,
+          userId: user._id
+        };
+      } catch (error) {
+        return {
+          status: 500,
+          error: error.message,
+          userId: user._id
+        };
+      }
+    })
   );
 
-  const successful = results.filter(r => r.status === 201);
-  const conflicts = results.filter(r => r.status === 409);
-  const otherErrors = results.filter(r => r.status !== 201 && r.status !== 409);
+  const successful = results.filter((r) => r.status === 201 || r.status === 200);
+  const conflicts = results.filter((r) => r.status === 409 || r.status === 400);
+  const otherErrors = results.filter((r) => r.status !== 201 && r.status !== 200 && r.status !== 409 && r.status !== 400);
 
   console.log('\n--- TEST RESULTS ---');
-  console.log(`Successful Registrations (HTTP 201): ${successful.length}`);
-  console.log(`Rejected (HTTP 409 - Sold Out / Already Registered): ${conflicts.length}`);
+  console.log(`Successful Registrations (HTTP 201/200): ${successful.length}`);
+  console.log(`Rejected (HTTP 409/400 - Capacity Full / Duplicate): ${conflicts.length}`);
   console.log(`Other Unexpected Errors: ${otherErrors.length}`);
+
+  if (otherErrors.length > 0) {
+    console.log('Sample unexpected response:', otherErrors[0]);
+  }
 
   // DB Verification
   const freshComp = await Competition.findById(comp._id);
@@ -82,16 +115,20 @@ async function runConcurrencyTest() {
 
   // Cleanup test users and test registrations
   console.log('\nCleaning up stress test data...');
-  const testUserIds = testUsers.map(u => u._id);
+  const testUserIds = testUsers.map((u) => u._id);
   await Registration.deleteMany({ userId: { $in: testUserIds } });
   await User.deleteMany({ _id: { $in: testUserIds } });
-  await Competition.findByIdAndUpdate(comp._id, { bookedSpots: comp.bookedSpots }); // restore initial count
+  
+  // Restore initial bookedSpots count
+  await Competition.findByIdAndUpdate(comp._id, { bookedSpots: initialBooked });
   console.log('Cleanup complete.');
 
+  await mongoose.disconnect();
   process.exit(0);
 }
 
-runConcurrencyTest().catch(err => {
-  console.error(err);
+runConcurrencyTest().catch(async (err) => {
+  console.error('Unhandled script error:', err);
+  await mongoose.disconnect();
   process.exit(1);
 });
