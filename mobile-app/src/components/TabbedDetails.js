@@ -1,4 +1,3 @@
-// mobile-app/src/components/TabbedDetails.js
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { translations } from '../utils/translations';

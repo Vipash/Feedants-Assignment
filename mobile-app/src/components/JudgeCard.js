@@ -1,5 +1,3 @@
-// mobile-app/src/components/JudgeCard.js
-
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, Linking } from 'react-native';
 import { Play } from 'lucide-react-native';

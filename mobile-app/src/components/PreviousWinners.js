@@ -1,4 +1,3 @@
-// mobile-app/src/components/PreviousWinners.js
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Alert, Linking } from 'react-native';
 import { Play } from 'lucide-react-native';

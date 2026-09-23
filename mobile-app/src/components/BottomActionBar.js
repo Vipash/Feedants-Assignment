@@ -1,4 +1,3 @@
-// mobile-app/src/components/BottomActionBar.js
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { UploadCloud, CheckCircle2 } from 'lucide-react-native';

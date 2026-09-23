@@ -1,4 +1,3 @@
-// mobile-app/src/components/Header.js
 import React, { useState } from 'react';
 import { 
   View, 

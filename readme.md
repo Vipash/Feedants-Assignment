@@ -1,7 +1,9 @@
 # Feedants — Competition Details Screen (Full-Stack Module)
 [![CI Pipeline](https://github.com/Vipash/Feedants-Assignment/actions/workflows/ci.yml/badge.svg)](https://github.com/Vipash/Feedants-Assignment/actions/workflows/ci.yml)
 
-> 🎥 **Live Video Walkthrough**: [Watch the 3-Minute End-to-End Implementation Demo](https://drive.google.com/file/d/1x3QUyJVrdLnGmqHGK1xn2cPB3qXxZJ_N/view?usp=drive_link)
+> 🎥 **Live Video Walkthrough**: [5-Minute Implementation Demo](https://drive.google.com/file/d/1x3QUyJVrdLnGmqHGK1xn2cPB3qXxZJ_N/view?usp=drive_link)
+> 
+> *Demo Video Note: Recorded via USB screen mirroring on a resource-constrained development machine. Any minor frame drops in the video are artifacts of local video encoding, not application responsiveness.*
 
 A production-grade, highly scalable Competition Details module built with **React Native (Expo)**, **Node.js / Express**, and **MongoDB Atlas**. Designed to handle real-world competition lifecycles, race-condition-free spot reservations under high concurrency, and multi-state participant flows.
 
@@ -121,6 +123,21 @@ Actual Registration documents in DB: 20
 
 ---
 
+## 🛠️ Developer Retrospective (These got me pretty good ngl..)
+
+> **Development Approach**: Built within a 48-hour sprint utilizing AI-assisted developer workflows (mainly Gemini) as architectural sounding boards and code accelerators. All database schemas, concurrency locking patterns, network loopbacks, and state machines were manually wired, tested, and verified.
+
+Building this within a tight development window surfaced a few practical engineering challenges:
+
+1. **Android Physical Device Networking**:
+When testing on physical Android hardware via Expo Go, requests to `localhost` hit the phone's loopback interface rather than the development machine. Mapping the backend to the host machine's Wi-Fi LAN IP (`10.78.55.113`) and opening Windows Defender port 5000 was necessary for reliable packet routing.
+2. **Mongoose Schema Stripping Gotcha**:
+During initial testing, winner ranks defaulted to "1st Winner" across all cards. Traced this down to Mongoose's strict schema mode stripping the `rank` attribute on write because it hadn't been declared in the `previousWinners` sub-schema definition.
+3. **Client-Side Safe Areas**:
+Standard React Native `SafeAreaView` only handles iOS notch insets natively. Implemented dynamic `StatusBar.currentHeight` offsets to keep the top utility bar accessible on hole-punch Android displays.
+
+---
+
 ## 🚀 Step-by-Step Setup Guide
 
 ### 1. Prerequisites
@@ -221,9 +238,7 @@ npx expo start
 ### MongoDB Atomic Operations vs. Application-Level Locking
 
 * **Problem**: Traditional `findOne()` followed by `comp.bookedSpots += 1; await comp.save()` causes severe race conditions under concurrent load.
-* **Solution**: Implemented `Competition.findOneAndUpdate()` with an atomic precondition:
-`$expr: { $lt: ['$bookedSpots', '$totalCapacity'] }`.
-MongoDB's WiredTiger storage engine handles locking at the document layer, guaranteeing zero spot over-allocation.
+* **Solution**: Implemented `Competition.findOneAndUpdate()` with an atomic precondition: `$expr: { $lt: ['$bookedSpots', '$totalCapacity'] }`. MongoDB's WiredTiger storage engine handles locking at the document layer, guaranteeing zero spot over-allocation.
 
 ### Compound Unique Index for Duplicate Prevention
 

@@ -1,4 +1,3 @@
-// mobile-app/src/components/CountdownTimer.js
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Hourglass, Flame } from 'lucide-react-native';

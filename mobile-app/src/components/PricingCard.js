@@ -1,4 +1,3 @@
-// mobile-app/src/components/PricingCard.js
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Users } from 'lucide-react-native';

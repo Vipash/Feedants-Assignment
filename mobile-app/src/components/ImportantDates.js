@@ -1,4 +1,3 @@
-// mobile-app/src/components/ImportantDates.js
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Calendar, Send, UploadCloud, Award } from 'lucide-react-native';

@@ -1,4 +1,3 @@
-// mobile-app/src/components/TrustAndReferral.js
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, TextInput } from 'react-native';
 import { 

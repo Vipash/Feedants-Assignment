@@ -1,4 +1,3 @@
-// mobile-app/src/components/RewardsBreakdown.js
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Trophy, Medal, Award, Star } from 'lucide-react-native';

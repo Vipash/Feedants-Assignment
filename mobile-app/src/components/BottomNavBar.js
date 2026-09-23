@@ -1,4 +1,3 @@
-// mobile-app/src/components/BottomNavBar.js
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Home, Compass, Plus, Trophy, User } from 'lucide-react-native';
