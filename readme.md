@@ -17,9 +17,9 @@ A production-grade, highly scalable Competition Details module built with **Reac
 
 ### Page Layout & Additional Sections
 
-| Page View |
-| :---: |
-| ![Main Page Bottom](./docs/screenshots/main_page_bottom.png) |
+| Page Middle Section | Page Bottom Section |
+| :---: | :---: |
+| ![Main Page Middle](./docs/screenshots/main_page_middle.png) | ![Main Page Bottom](./docs/screenshots/main_page_bottom.png) |
 
 ---
 
