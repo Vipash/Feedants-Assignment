@@ -9,9 +9,17 @@ A production-grade, highly scalable Competition Details module built with **Reac
 
 ## 📸 Visual Previews
 
-| English View (Unregistered User) | Hindi Localization (Registered User) |
+### Core Screen Interactions & Localization
+
+| English View (Main Page) | Hindi View (Main Page) |
 | :---: | :---: |
-| ![English Preview](docs/screenshots/Main_Page_Eng.png) | ![Hindi Preview](docs/screenshots/Main_Page_Hin.png) |
+| ![Main Page Eng](./docs/screenshots/main_page_eng.png) | ![Main Page Hin](./docs/screenshots/main_page_hin.png) |
+
+### Page Layout & Additional Sections
+
+| Page View |
+| :---: |
+| ![Main Page Bottom](./docs/screenshots/main_page_bottom.png) |
 
 ---
 
