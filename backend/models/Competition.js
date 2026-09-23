@@ -35,7 +35,7 @@ const competitionSchema = new mongoose.Schema({
   // Itemized Rewards
   rewards: [
     {
-      rankTitle: { type: String, required: true }, // e.g., "1st Winner"
+      rankTitle: { type: String, required: true },
       amount: { type: Number, required: true }
     }
   ],
@@ -44,8 +44,8 @@ const competitionSchema = new mongoose.Schema({
   previousWinners: [
     {
       name: { type: String },
+      rank: { type: String },
       avatarUrl: { type: String },
-      videoThumbnail: { type: String },
       videoUrl: { type: String }
     }
   ],

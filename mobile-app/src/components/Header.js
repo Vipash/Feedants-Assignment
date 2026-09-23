@@ -7,7 +7,8 @@ import {
   TouchableOpacity, 
   Platform, 
   StatusBar, 
-  Modal 
+  Modal,
+  ScrollView 
 } from 'react-native';
 import { ArrowLeft, CheckCircle2, User, Trophy, Plus, RotateCcw, X } from 'lucide-react-native';
 import { translations } from '../utils/translations';
@@ -111,22 +112,24 @@ export default function Header({
 
             <Text style={styles.modalSubtitle}>Select a user to test dynamic states:</Text>
 
-            {users.map((u) => {
-              const isSelected = u._id === currentUser?._id;
-              return (
-                <TouchableOpacity 
-                  key={u._id} 
-                  style={[styles.userOption, isSelected && styles.userOptionSelected]}
-                  onPress={() => {
-                    onSelectUser(u);
-                    setModalVisible(false);
-                  }}
-                >
-                  <Text style={[styles.userName, isSelected && styles.userNameSelected]}>{u.name}</Text>
-                  <Text style={styles.userEmail}>{u.email}</Text>
-                </TouchableOpacity>
-              );
-            })}
+            <ScrollView style={{ maxHeight: 220, marginVertical: 6 }} showsVerticalScrollIndicator={true}>
+                {users.map((u) => {
+                  const isSelected = u._id === currentUser?._id;
+                  return (
+                    <TouchableOpacity 
+                      key={u._id} 
+                      style={[styles.userOption, isSelected && styles.userOptionSelected]}
+                      onPress={() => {
+                        onSelectUser(u);
+                        setModalVisible(false);
+                      }}
+                    >
+                      <Text style={[styles.userName, isSelected && styles.userNameSelected]}>{u.name}</Text>
+                      <Text style={styles.userEmail}>{u.email}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
 
             {/* Actions: Add New Unregistered User & Reset Demo */}
             <View style={styles.modalActionButtons}>

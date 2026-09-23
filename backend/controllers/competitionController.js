@@ -219,24 +219,41 @@ exports.getUsers = async (req, res) => {
   }
 };
 
-const MOCK_NAMES = [
-  'Kabir Joshi', 'Priya Patel', 'Siddharth Rao', 'Tanvi Deshmukh',
-  'Aditya Verma', 'Meera Iyer', 'Arjun Kapoor', 'Sanya Malhotra'
-];
+const FIRST_NAMES = ['Kabir', 'Priya', 'Siddharth', 'Tanvi', 'Aditya', 'Meera', 'Arjun', 'Sanya', 'Rohan', 'Ananya', 'Varun', 'Ishita'];
+const LAST_NAMES = ['Joshi', 'Patel', 'Rao', 'Deshmukh', 'Verma', 'Iyer', 'Kapoor', 'Malhotra', 'Sharma', 'Mehta', 'Chouhan', 'Nair'];
 
 exports.createGuestUser = async (req, res) => {
   try {
-    const userCount = await User.countDocuments();
-    const randomName = MOCK_NAMES[(userCount - 2) % MOCK_NAMES.length] || `Participant ${userCount + 1}`;
-    
+    // 1. Pick a truly random first name and last name
+    const randomFirst = FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)];
+    const randomLast = LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)];
+    const fullName = `${randomFirst} ${randomLast}`;
+
+    // 2. Add high-precision timestamp + random salt to guarantee email uniqueness
+    const timestamp = Date.now().toString().slice(-6);
+    const randomSalt = Math.floor(100 + Math.random() * 900);
+    const uniqueEmail = `${randomFirst.toLowerCase()}.${randomLast.toLowerCase()}_${timestamp}${randomSalt}@feedants.com`;
+
+    // 3. Create unique referral code
+    const refCode = `${randomFirst.slice(0, 3).toUpperCase()}${Math.floor(1000 + Math.random() * 9000)}`;
+
     const user = await User.create({
-      name: randomName,
-      email: `${randomName.toLowerCase().replace(/\s+/g, '.')}_${Date.now()}@feedants.com`,
-      referralCode: `${randomName.slice(0, 4).toUpperCase()}${Math.floor(100 + Math.random() * 900)}`
+      name: fullName,
+      email: uniqueEmail,
+      referralCode: refCode
     });
-    return res.status(201).json({ success: true, message: 'New participant created', data: user });
+
+    return res.status(201).json({ 
+      success: true, 
+      message: 'New guest user created', 
+      data: user 
+    });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to create user' });
+    console.error('Create guest user error:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Failed to create user' 
+    });
   }
 };
 
