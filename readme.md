@@ -1,8 +1,17 @@
 # Feedants — Competition Details Screen (Full-Stack Module)
 [![CI Pipeline](https://github.com/Vipash/Feedants-Assignment/actions/workflows/ci.yml/badge.svg)](https://github.com/Vipash/Feedants-Assignment/actions/workflows/ci.yml)
 
+> 🎥 **Live Video Walkthrough**: [Watch the 3-Minute End-to-End Implementation Demo](https://drive.google.com/file/d/1x3QUyJVrdLnGmqHGK1xn2cPB3qXxZJ_N/view?usp=drive_link)
 
 A production-grade, highly scalable Competition Details module built with **React Native (Expo)**, **Node.js / Express**, and **MongoDB Atlas**. Designed to handle real-world competition lifecycles, race-condition-free spot reservations under high concurrency, and multi-state participant flows.
+
+---
+
+## 📸 Visual Previews
+
+| English View (Unregistered User) | Hindi Localization (Registered User) |
+| :---: | :---: |
+| ![English Preview](docs/screenshots/Main_Page_Eng.png) | ![Hindi Preview](docs/screenshots/Main_Page_Hin.png) |
 
 ---
 
@@ -26,6 +35,22 @@ feedants-competition-module/
     └── App.js              # Root state orchestrator, user switcher modal & tab router
 
 ```
+
+---
+
+## 🔌 REST API Specification
+
+Base URL: `http://<HOST_IP>:5000/api/v1/competitions`
+
+| Method | Endpoint | Description | Headers | Request Body | Response Status |
+| --- | --- | --- | --- | --- | --- |
+| `GET` | `/primary` | Resolves active competition, dynamic lifecycle & user state | `x-user-id` (optional) | None | `200 OK`, `404 Not Found` |
+| `GET` | `/:id` | Get specific competition details by Mongo ID | `x-user-id` (optional) | None | `200 OK`, `404 Not Found` |
+| `POST` | `/:id/register` | Atomic, race-condition-safe spot booking | `x-user-id` (required) | None | `201 Created`, `400 Closed`, `409 Full/Registered` |
+| `POST` | `/:id/submit` | Upload participant performance submission | `x-user-id` (required) | `{ "mediaUrl": "string" }` | `200 OK`, `403 Unregistered` |
+| `GET` | `/users` | Fetch seeded test participants | None | None | `200 OK` |
+| `POST` | `/users/new` | Dynamically generate a fresh unregistered participant | None | None | `201 Created` |
+| `POST` | `/:id/reset-demo` | Reset spots to 1/20 and purge guest test participants | None | None | `200 OK` |
 
 ---
 
@@ -88,7 +113,7 @@ Actual Registration documents in DB: 20
 
 ---
 
-## 🚀 Setup & Running Instructions
+## 🚀 Step-by-Step Setup Guide
 
 ### 1. Prerequisites
 
@@ -99,12 +124,18 @@ Actual Registration documents in DB: 20
 ### 2. Backend Setup
 
 ```bash
+# Navigate to backend directory
 cd backend
+
+# Install dependencies
 npm install
+
+# Create .env from template (or manually create .env)
+cp .env.example .env
 
 ```
 
-Create a `.env` file inside `backend/`:
+Open `.env` and set your connection parameters:
 
 ```env
 PORT=5000
@@ -112,7 +143,7 @@ MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/feedants?retry
 
 ```
 
-Seed the database with test data:
+Seed the database with baseline competition and test participants:
 
 ```bash
 npm run seed
@@ -133,29 +164,39 @@ npm run dev
 
 ```
 
+---
+
 ### 3. Mobile App Setup
 
 ```bash
-cd mobile-app
+# Navigate to mobile-app directory
+cd ../mobile-app
+
+# Install dependencies
 npm install
 
 ```
 
-Configure your computer's local network IP in `mobile-app/src/config/api.js`:
+#### Network Configuration (`mobile-app/src/config/api.js`)
 
-```javascript
-export const API_BASE_URL = 'http://<YOUR_LOCAL_IP>:5000/api/v1/competitions';
+Depending on your target client, configure `API_BASE_URL` accordingly:
 
-```
+| Target Device | `API_BASE_URL` Setting | Note |
+| --- | --- | --- |
+| **Android Physical Device (Expo Go)** | `http://<YOUR_LAN_IP>:5000/api/v1/competitions` | PC and phone must be on the same Wi-Fi subnet (e.g., `10.78.55.113` or `192.168.1.X`). |
+| **Android Emulator** | `http://10.0.2.2:5000/api/v1/competitions` | Android emulator loopback alias to host machine. |
+| **iOS Simulator / Web** | `http://localhost:5000/api/v1/competitions` | Local loopback interface. |
 
-Start the Expo bundler:
+Start the Expo development server:
 
 ```bash
 npx expo start
 
 ```
 
-Scan the generated QR code using the **Expo Go** app on your device.
+* Press `a` for Android Emulator.
+* Scan the generated QR code via **Expo Go** on a physical device.
+* Press `w` for Web preview.
 
 ---
 
@@ -191,32 +232,40 @@ To eliminate 404 errors caused by hardcoded database ObjectIDs across re-seeding
 ### Documented Engineering Compromises
 
 * **Simulated Payment Settlement (Zero-Friction Registration)**
-  * **Trade-off**: Rather than forcing the evaluator through a test Razorpay modal with OTP popups, tapping "Register Now" immediately commits the atomic spot reservation.
-  * **Production Transition**: In production, the button would invoke `RazorpayCheckout.open()`. The spot would enter a temporary 10-minute lock state (`status: 'PENDING'`), and confirmation would occur asynchronously via a signature-verified Razorpay Webhook.
+* **Trade-off**: Rather than forcing the evaluator through a test Razorpay modal with OTP popups, tapping "Register Now" immediately commits the atomic spot reservation.
+* **Production Transition**: In production, the button would invoke `RazorpayCheckout.open()`. The spot would enter a temporary 10-minute lock state (`status: 'PENDING'`), and confirmation would occur asynchronously via a signature-verified Razorpay Webhook.
+
 
 * **Evaluator User Switcher vs. Standalone Authentication**
-  * **Trade-off**: Excluded multi-screen SMS/OTP registration so the evaluator can test multiple registration states (Registered vs. Unregistered) instantly without needing multiple phone numbers or account resets.
-  * **Production Transition**: In production, user state would be derived from a verified JWT Bearer token via standard Auth0 / Firebase Auth middleware.
+* **Trade-off**: Excluded multi-screen SMS/OTP registration so the evaluator can test multiple registration states (Registered vs. Unregistered) instantly without needing multiple phone numbers or account resets.
+* **Production Transition**: In production, user state would be derived from a verified JWT Bearer token via standard Auth0 / Firebase Auth middleware.
+
 
 * **Dynamic Guest Pool vs. Persistent Multi-Tenant Users**
-  * **Trade-off**: Random combination generator (Kabir Joshi, Priya Patel) allows creating disposable users without a registration form.
-  * **Production Transition**: User sign-ups would be stored persistently with KYC and payout details for direct prize distribution.
+* **Trade-off**: Random combination generator (Kabir Joshi, Priya Patel) allows creating disposable users without a registration form.
+* **Production Transition**: User sign-ups would be stored persistently with KYC and payout details for direct prize distribution.
+
 
 * **Direct Database Atomicity vs. Redis In-Memory Locks**
-  * **Trade-off**: Relied on MongoDB WiredTiger document-level atomic operations instead of an external Redis/Redlock cluster.
-  * **Production Transition**: For traffic exceeding 10,000 requests/sec, Redis distributed locking would be placed ahead of MongoDB to shield the database layer entirely.
+* **Trade-off**: Relied on MongoDB WiredTiger document-level atomic operations instead of an external Redis/Redlock cluster.
+* **Production Transition**: For traffic exceeding 10,000 requests/sec, Redis distributed locking would be placed ahead of MongoDB to shield the database layer entirely.
+
+
 
 ---
 
 ### Additional Architecture Trade-offs Considered
 
 * **MongoDB Atomic Operators vs. Redis Distributed Lock (Redlock)**:
-  * **Trade-off**: A Redis lock offers lower latency for high-throughput counters, but introduces additional infrastructure requirements and distributed failure modes.
-  * **Resolution**: For capacity management up to thousands of concurrent users, MongoDB's single-document atomic operations provide ACID-compliant consistency with zero additional infrastructure.
+* **Trade-off**: A Redis lock offers lower latency for high-throughput counters, but introduces additional infrastructure requirements and distributed failure modes.
+* **Resolution**: For capacity management up to thousands of concurrent users, MongoDB's single-document atomic operations provide ACID-compliant consistency with zero additional infrastructure.
+
 
 * **Client-Side Polling vs. WebSockets**:
-  * **Trade-off**: WebSockets provide instant push notifications for spot changes, but increase battery consumption and require persistent socket management.
-  * **Resolution**: Implemented optimistic client updates paired with pull-to-refresh. In full production, Server-Sent Events (SSE) would serve as a lightweight notification channel for spot updates.
+* **Trade-off**: WebSockets provide instant push notifications for spot changes, but increase battery consumption and require persistent socket management.
+* **Resolution**: Implemented optimistic client updates paired with pull-to-refresh. In full production, Server-Sent Events (SSE) would serve as a lightweight notification channel for spot updates.
+
+
 
 ---
 
@@ -225,3 +274,7 @@ To eliminate 404 errors caused by hardcoded database ObjectIDs across re-seeding
 1. **Read-Through Caching with Redis**: Cache `GET /competitions/primary` responses with a 5-second TTL to absorb read traffic spikes during promotional events.
 2. **Asynchronous Registration Queue (BullMQ / AWS SQS)**: Offload secondary post-registration tasks (confirmation emails, referral credit allocation, invoice generation) to background worker jobs.
 3. **Real Razorpay Webhook Integration**: Attach verified HMAC-SHA256 signature validation with idempotent event ID caching to support live payment settlements.
+
+```
+
+```
