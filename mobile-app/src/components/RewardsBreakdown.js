@@ -57,12 +57,13 @@ const styles = StyleSheet.create({
   card: { backgroundColor: '#FFFFFF', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0' },
   row: {
     flexDirection: 'row',
-    justify: 'space-between',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderColor: '#F1F5F9'
+    borderColor: '#F1F5F9',
+    gap: 12
   },
   noBorder: { borderBottomWidth: 0 },
   leftCol: { flexDirection: 'row', alignItems: 'center', gap: 10 },

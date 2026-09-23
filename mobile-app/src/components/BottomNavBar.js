@@ -55,7 +55,7 @@ export default function BottomNavBar({ activeTab = 'Competitions', onSelectTab, 
 const styles = StyleSheet.create({
   navBar: {
     flexDirection: 'row',
-    height: 64, // Increased height to prevent congestion
+    height: 77,
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderColor: '#E2E8F0',
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
     justify: 'space-around',
     paddingHorizontal: 8,
     paddingBottom: 4,
-    overflow: 'visible' // Allows FAB button to pop up cleanly without clipping
+    overflow: 'visible'
   },
   tab: { alignItems: 'center', justifyContent: 'center', flex: 1 },
   tabLabel: { fontSize: 10, color: '#94A3B8', marginTop: 3, fontWeight: '500' },
@@ -73,9 +73,10 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     backgroundColor: '#0D9488',
-    justify: 'center',
-    alignItems: 'center',
-    marginTop: -20, // Clean vertical offset
+    justifyContent: 'center',
+    alignItems: 'center',  
+    marginTop: -10,
+    alignSelf: 'center',
     elevation: 6,
     shadowColor: '#0D9488',
     shadowOpacity: 0.35,

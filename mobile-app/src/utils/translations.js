@@ -48,7 +48,7 @@ export const translations = {
     earnSignup: 'You earn ₹10 for every signup',
     hearUsers: 'Hear From Our Users',
     hearUsersSub: 'See what participants say about Feedants',
-    adHere: 'Ad Here',
+    adHere: '(Ad Here)                 Made by Vipash',
     
     // Buttons & Nav
     registerNow: 'Register Now',

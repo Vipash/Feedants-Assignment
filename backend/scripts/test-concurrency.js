@@ -15,7 +15,7 @@ async function runConcurrencyTest() {
   console.log('--- STARTING CONCURRENCY STRESS TEST ---');
 
   // Find the competition
-  const comp = await Competition.findOne({ title: 'Feedants Classical Dance' });
+  const comp = await Competition.findOne({ title: 'Feedants - Classical Dance Event' });
   if (!comp) {
     console.error('Seed competition not found. Run "npm run seed" first.');
     process.exit(1);

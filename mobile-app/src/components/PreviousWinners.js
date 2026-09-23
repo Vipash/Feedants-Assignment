@@ -1,11 +1,12 @@
 // mobile-app/src/components/PreviousWinners.js
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Alert, Linking } from 'react-native';
 import { Play } from 'lucide-react-native';
 import { translations } from '../utils/translations';
 
 export default function PreviousWinners({ winners = [], language = 'ENG' }) {
   const t = translations[language] || translations.ENG;
+  const demoVideoUrl = 'https://www.youtube.com/watch?v=4xnsmyI5KMQ';
 
   const defaultWinners = [
     { name: 'Riya Parashar', rank: '1st Winner', avatarUrl: 'https://images.unsplash.com/photo-1609137144822-38605c48b788?w=300' },
@@ -16,6 +17,36 @@ export default function PreviousWinners({ winners = [], language = 'ENG' }) {
 
   const list = winners.length > 0 ? winners : defaultWinners;
 
+  const handlePlayWinnerVideo = (winner) => {
+    const videoUrl = winner.videoUrl || demoVideoUrl;
+
+    Alert.alert(
+      'Previous Winner',
+      `Playing winning classical performance of ${winner.name}\n\nLink: ${videoUrl}`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Watch Performance',
+          onPress: async () => {
+            try {
+              const supported = await Linking.canOpenURL(videoUrl);
+              if (supported) {
+                await Linking.openURL(videoUrl);
+              } else {
+                Alert.alert('Error', 'Unable to open video link.');
+              }
+            } catch (err) {
+              Alert.alert('Error', 'An error occurred while opening the video.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>{t.previousWinners}</Text>
@@ -25,9 +56,8 @@ export default function PreviousWinners({ winners = [], language = 'ENG' }) {
             key={idx} 
             style={styles.card} 
             activeOpacity={0.8}
-            onPress={() => Alert.alert('Previous Winner', `Playing winning classical performance of ${winner.name}`)}
+            onPress={() => handlePlayWinnerVideo(winner)}
           >
-            {/* Square Image with floating play circle */}
             <View style={styles.imgContainer}>
               <Image source={{ uri: winner.avatarUrl }} style={styles.thumbnail} />
               <View style={styles.playCircle}>
@@ -35,7 +65,6 @@ export default function PreviousWinners({ winners = [], language = 'ENG' }) {
               </View>
             </View>
 
-            {/* Name and Rank beside the image */}
             <View style={styles.meta}>
               <Text style={styles.name} numberOfLines={1}>{winner.name}</Text>
               <Text style={styles.rank}>{winner.rank || '1st Winner'}</Text>

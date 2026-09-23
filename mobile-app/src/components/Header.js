@@ -75,7 +75,7 @@ export default function Header({
       {/* Title & Registered Status Row */}
       <View style={styles.titleRow}>
         <Text style={styles.title}>
-          {language === 'HINDI' ? 'फ़ीडैंट्स शास्त्रीय नृत्य' : (title || 'Feedants Classical Dance')}
+          {language === 'HINDI' ? 'फ़ीडैंट्स - शास्त्रीय नृत्य आयोजन' : (title || 'Feedants - Classical Dance Event')}
         </Text>
         {isRegistered && (
           <View style={styles.registeredBadge}>
@@ -104,8 +104,15 @@ export default function Header({
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Switch User / Demo Control</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
+              <View style={{ flex: 1, paddingRight: 12 }}>
+                <Text style={styles.modalTitle} numberOfLines={1}>
+                  Switch User / Demo Control
+                </Text>
+              </View>
+              <TouchableOpacity 
+                onPress={() => setModalVisible(false)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} // Makes touch area larger
+              >
                 <X size={20} color="#64748B" />
               </TouchableOpacity>
             </View>
@@ -298,13 +305,17 @@ const styles = StyleSheet.create({
   },
   modalHeader: {
     flexDirection: 'row',
-    justify: 'space-between',
-    alignItems: 'center'
+    justifyContent: 'space-between',
+    alignItems: 'center',            
+    width: '100%',
+    marginBottom: 16,                
   },
   modalTitle: {
+    flex: 1,                         
+    marginRight: 12,                 
     fontSize: 16,
-    fontWeight: '800',
-    color: '#0F172A'
+    fontWeight: '700',
+    color: '#1E293B',
   },
   modalSubtitle: {
     fontSize: 12,

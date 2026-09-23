@@ -65,12 +65,12 @@ async function seed() {
       'Video must clearly show full-body movements and expressions.'
     ],
     rewards: [
-      { rankTitle: '1st Winner', amount: 550 },
-      { rankTitle: '2nd Winner', amount: 300 },
-      { rankTitle: '3rd Winner', amount: 240 },
-      { rankTitle: '4th Winner', amount: 200 },
-      { rankTitle: '5th Winner', amount: 130 },
-      { rankTitle: '6th Winner', amount: 80 }
+      { rankTitle: '1st Winner  ', amount: 550 },
+      { rankTitle: '2nd Winner  ', amount: 300 },
+      { rankTitle: '3rd Winner  ', amount: 240 },
+      { rankTitle: '4th Winner  ', amount: 200 },
+      { rankTitle: '5th Winner  ', amount: 130 },
+      { rankTitle: '6th Winner  ', amount: 80 }
     ],
     previousWinners: [
       {

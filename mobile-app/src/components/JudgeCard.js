@@ -1,10 +1,42 @@
 // mobile-app/src/components/JudgeCard.js
+
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, Linking } from 'react-native';
 import { Play } from 'lucide-react-native';
 
 export default function JudgeCard({ judge }) {
   if (!judge) return null;
+
+  // Use dynamic videoUrl if available on judge object, otherwise fallback to default
+  const videoUrl = judge.videoUrl || 'https://www.youtube.com/watch?v=5CvwgC-WQlo';
+
+  const handlePlayVideo = async () => {
+    Alert.alert(
+      'Judge Spotlight',
+      `Playing introductory trailer from ${judge?.name || 'Judge'}\n\nLink: ${videoUrl}`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Watch Video',
+          onPress: async () => {
+            try {
+              const supported = await Linking.canOpenURL(videoUrl);
+              if (supported) {
+                await Linking.openURL(videoUrl);
+              } else {
+                Alert.alert('Error', 'Unable to open video link.');
+              }
+            } catch (err) {
+              Alert.alert('Error', 'An error occurred while attempting to open the link.');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <View style={styles.card}>
@@ -22,7 +54,7 @@ export default function JudgeCard({ judge }) {
       <TouchableOpacity 
         style={styles.playButtonContainer} 
         activeOpacity={0.8}
-        onPress={() => Alert.alert('Judge Spotlight', `Playing introductory trailer from ${judge.name}`)}
+        onPress={handlePlayVideo}
       >
         <View style={styles.playCircle}>
           <Play size={16} color="#0D9488" fill="#0D9488" />
