@@ -14,12 +14,13 @@ async function runConcurrencyTest() {
   await mongoose.connect(process.env.MONGO_URI);
   console.log('--- STARTING CONCURRENCY STRESS TEST ---');
 
-  // Find the competition
-  const comp = await Competition.findOne({ title: 'Feedants - Classical Dance Event' });
+  const comp = await Competition.findOne().sort({ createdAt: -1 });
   if (!comp) {
     console.error('Seed competition not found. Run "npm run seed" first.');
     process.exit(1);
   }
+
+  console.log(`Targeting Competition: "${comp.title}" (ID: ${comp._id})`);
 
   const remaining = comp.totalCapacity - comp.bookedSpots;
   console.log(`Current spots remaining: ${remaining} (Total: ${comp.totalCapacity}, Booked: ${comp.bookedSpots})`);

@@ -74,9 +74,7 @@ export default function Header({
 
       {/* Title & Registered Status Row */}
       <View style={styles.titleRow}>
-        <Text style={styles.title}>
-          {language === 'HINDI' ? 'फ़ीडैंट्स - शास्त्रीय नृत्य आयोजन' : (title || 'Feedants - Classical Dance Event')}
-        </Text>
+        <Text style={styles.title}>{t.competitionTitle || title}</Text>
         {isRegistered && (
           <View style={styles.registeredBadge}>
             <CheckCircle2 size={13} color="#059669" />
@@ -111,7 +109,7 @@ export default function Header({
               </View>
               <TouchableOpacity 
                 onPress={() => setModalVisible(false)}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} // Makes touch area larger
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <X size={20} color="#64748B" />
               </TouchableOpacity>
@@ -120,23 +118,23 @@ export default function Header({
             <Text style={styles.modalSubtitle}>Select a user to test dynamic states:</Text>
 
             <ScrollView style={{ maxHeight: 220, marginVertical: 6 }} showsVerticalScrollIndicator={true}>
-                {users.map((u) => {
-                  const isSelected = u._id === currentUser?._id;
-                  return (
-                    <TouchableOpacity 
-                      key={u._id} 
-                      style={[styles.userOption, isSelected && styles.userOptionSelected]}
-                      onPress={() => {
-                        onSelectUser(u);
-                        setModalVisible(false);
-                      }}
-                    >
-                      <Text style={[styles.userName, isSelected && styles.userNameSelected]}>{u.name}</Text>
-                      <Text style={styles.userEmail}>{u.email}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
+              {users.map((u) => {
+                const isSelected = u._id === currentUser?._id;
+                return (
+                  <TouchableOpacity 
+                    key={u._id} 
+                    style={[styles.userOption, isSelected && styles.userOptionSelected]}
+                    onPress={() => {
+                      onSelectUser(u);
+                      setModalVisible(false);
+                    }}
+                  >
+                    <Text style={[styles.userName, isSelected && styles.userNameSelected]}>{u.name}</Text>
+                    <Text style={styles.userEmail}>{u.email}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
 
             {/* Actions: Add New Unregistered User & Reset Demo */}
             <View style={styles.modalActionButtons}>

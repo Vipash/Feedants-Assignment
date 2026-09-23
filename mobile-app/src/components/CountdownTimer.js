@@ -38,28 +38,75 @@ export default function CountdownTimer({ targetDate, language = 'ENG' }) {
 
   return (
     <View style={styles.banner}>
+      {/* Left Section: Hourglass + Label */}
       <View style={styles.left}>
-        <Hourglass size={14} color="#047857" />
-        <Text style={styles.label}>{t.regClosesIn}</Text>
+        <Hourglass size={12} color="#047857" />
+        <Text style={styles.label} numberOfLines={1}>
+          {t.regClosesIn}
+        </Text>
       </View>
 
-      <Text style={styles.timerNumbers}>
-        {timeLeft.days}d : {timeLeft.hours}h : {timeLeft.minutes}m : {timeLeft.seconds}s
+      {/* Center Section: Compact Timer */}
+      <Text style={styles.timerNumbers} numberOfLines={1}>
+        {timeLeft.days}d:{timeLeft.hours}h:{timeLeft.minutes}m:{timeLeft.seconds}s
       </Text>
 
+      {/* Right Section: Flame + Shortened Tag */}
       <View style={styles.hurryTag}>
-        <Flame size={12} color="#DC2626" />
-        <Text style={styles.hurryText}>{t.hurryUp}</Text>
+        <Flame size={10} color="#DC2626" />
+        <Text style={styles.hurryText} numberOfLines={1}>
+          {language === 'HINDI' ? 'शीघ्र!' : 'Hurry!'}
+        </Text>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  banner: { backgroundColor: '#F0FDF4', marginHorizontal: 16, marginTop: 10, borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: '#BBF7D0' },
-  left: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  label: { fontSize: 11, fontWeight: '600', color: '#065F46' },
-  timerNumbers: { fontSize: 12, fontWeight: '800', color: '#047857' },
-  hurryTag: { flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: '#FEE2E2', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
-  hurryText: { fontSize: 10, fontWeight: '700', color: '#DC2626' }
+  banner: { 
+    backgroundColor: '#F0FDF4', 
+    marginHorizontal: 16, 
+    marginTop: 10, 
+    borderRadius: 8, 
+    paddingVertical: 7, 
+    paddingHorizontal: 8, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    borderWidth: 1, 
+    borderColor: '#BBF7D0' 
+  },
+  left: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 3,
+    flexShrink: 1 
+  },
+  label: { 
+    fontSize: 10.5, 
+    fontWeight: '600', 
+    color: '#065F46' 
+  },
+  timerNumbers: { 
+    fontSize: 11, 
+    fontWeight: '800', 
+    color: '#047857',
+    textAlign: 'center',
+    marginHorizontal: 2
+  },
+  hurryTag: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 2, 
+    backgroundColor: '#FEE2E2', 
+    paddingHorizontal: 5, 
+    paddingVertical: 2, 
+    borderRadius: 4,
+    flexShrink: 0
+  },
+  hurryText: { 
+    fontSize: 9.5, 
+    fontWeight: '700', 
+    color: '#DC2626' 
+  }
 });

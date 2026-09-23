@@ -186,18 +186,37 @@ To eliminate 404 errors caused by hardcoded database ObjectIDs across re-seeding
 
 ---
 
-## ⚖️ Trade-offs Considered
+## ⚖️ Trade-offs & Technical Assumptions
+
+### Documented Engineering Compromises
+
+* **Simulated Payment Settlement (Zero-Friction Registration)**
+  * **Trade-off**: Rather than forcing the evaluator through a test Razorpay modal with OTP popups, tapping "Register Now" immediately commits the atomic spot reservation.
+  * **Production Transition**: In production, the button would invoke `RazorpayCheckout.open()`. The spot would enter a temporary 10-minute lock state (`status: 'PENDING'`), and confirmation would occur asynchronously via a signature-verified Razorpay Webhook.
+
+* **Evaluator User Switcher vs. Standalone Authentication**
+  * **Trade-off**: Excluded multi-screen SMS/OTP registration so the evaluator can test multiple registration states (Registered vs. Unregistered) instantly without needing multiple phone numbers or account resets.
+  * **Production Transition**: In production, user state would be derived from a verified JWT Bearer token via standard Auth0 / Firebase Auth middleware.
+
+* **Dynamic Guest Pool vs. Persistent Multi-Tenant Users**
+  * **Trade-off**: Random combination generator (Kabir Joshi, Priya Patel) allows creating disposable users without a registration form.
+  * **Production Transition**: User sign-ups would be stored persistently with KYC and payout details for direct prize distribution.
+
+* **Direct Database Atomicity vs. Redis In-Memory Locks**
+  * **Trade-off**: Relied on MongoDB WiredTiger document-level atomic operations instead of an external Redis/Redlock cluster.
+  * **Production Transition**: For traffic exceeding 10,000 requests/sec, Redis distributed locking would be placed ahead of MongoDB to shield the database layer entirely.
+
+---
+
+### Additional Architecture Trade-offs Considered
 
 * **MongoDB Atomic Operators vs. Redis Distributed Lock (Redlock)**:
-* *Trade-off*: A Redis lock offers lower latency for high-throughput counters, but introduces additional infrastructure requirements and distributed failure modes.
-* *Resolution*: For capacity management up to thousands of concurrent users, MongoDB's single-document atomic operations provide ACID-compliant consistency with zero additional infrastructure.
-
+  * **Trade-off**: A Redis lock offers lower latency for high-throughput counters, but introduces additional infrastructure requirements and distributed failure modes.
+  * **Resolution**: For capacity management up to thousands of concurrent users, MongoDB's single-document atomic operations provide ACID-compliant consistency with zero additional infrastructure.
 
 * **Client-Side Polling vs. WebSockets**:
-* *Trade-off*: WebSockets provide instant push notifications for spot changes, but increase battery consumption and require persistent socket management.
-* *Resolution*: Implemented optimistic client updates paired with pull-to-refresh. In full production, Server-Sent Events (SSE) would serve as a lightweight notification channel for spot updates.
-
-
+  * **Trade-off**: WebSockets provide instant push notifications for spot changes, but increase battery consumption and require persistent socket management.
+  * **Resolution**: Implemented optimistic client updates paired with pull-to-refresh. In full production, Server-Sent Events (SSE) would serve as a lightweight notification channel for spot updates.
 
 ---
 
@@ -206,7 +225,3 @@ To eliminate 404 errors caused by hardcoded database ObjectIDs across re-seeding
 1. **Read-Through Caching with Redis**: Cache `GET /competitions/primary` responses with a 5-second TTL to absorb read traffic spikes during promotional events.
 2. **Asynchronous Registration Queue (BullMQ / AWS SQS)**: Offload secondary post-registration tasks (confirmation emails, referral credit allocation, invoice generation) to background worker jobs.
 3. **Real Razorpay Webhook Integration**: Attach verified HMAC-SHA256 signature validation with idempotent event ID caching to support live payment settlements.
-
-```
-
-```

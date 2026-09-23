@@ -8,6 +8,15 @@ export default function TabbedDetails({ description, parameters = [], rules = []
   const [activeTab, setActiveTab] = useState('ABOUT');
   const [expanded, setExpanded] = useState(false);
 
+  // Compute localized list items (uses props if passed in English, otherwise falls back to translation dictionaries)
+  const currentParams = language === 'HINDI' 
+    ? t.parametersList 
+    : (parameters?.length ? parameters.map(p => `${p.parameter} (${p.weightage}%)`) : t.parametersList);
+
+  const currentRules = language === 'HINDI' 
+    ? t.rulesList 
+    : (rules?.length ? rules : t.rulesList);
+
   return (
     <View style={styles.container}>
       <View style={styles.tabBar}>
@@ -45,15 +54,15 @@ export default function TabbedDetails({ description, parameters = [], rules = []
 
         {activeTab === 'JUDGING' && (
           <View style={styles.list}>
-            {parameters.map((item, idx) => (
-              <Text key={idx} style={styles.listItem}>• {item.parameter} ({item.weightage}%)</Text>
+            {currentParams.map((item, idx) => (
+              <Text key={idx} style={styles.listItem}>• {item}</Text>
             ))}
           </View>
         )}
 
         {activeTab === 'RULES' && (
           <View style={styles.list}>
-            {rules.map((rule, idx) => (
+            {currentRules.map((rule, idx) => (
               <Text key={idx} style={styles.listItem}>• {rule}</Text>
             ))}
           </View>
